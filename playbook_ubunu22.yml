@@ -125,7 +125,7 @@
       command: /home/percona/bin/gascan -refresh -get-inventory
     - name: Running `gascan` initially with installation of PMM-server
       ansible.builtin.shell: |
-        /home/percona/bin/gascan --passwordless-s
+        /home/percona/bin/gascan --passwordless-sudo
       become_user: percona
       environment:
         SHELL: /bin/bash
