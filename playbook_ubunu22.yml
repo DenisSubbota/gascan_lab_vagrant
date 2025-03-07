@@ -8,7 +8,7 @@
     custmer_env: 'denis_test_delete'
     client_identifier: "vsdA6ZBtMGyI34ao2NkPrqp1fjqX8tT0MIr9xhOVLEQfCGWPx8MgLt2WwTopcqtu"
     api_key: "9QVqPmlekUJV6dHn04hnS0HwemxrnboC7mrKJc8DwPvFtYwodt9C02OVc5MTDhO8"
-    gascan_version: 'v1.8.0'
+    gascan_version: 'v1.10.0'
 
   tasks:
     - name: Installing required packages for Ubuntu + mysql client
@@ -95,9 +95,7 @@
           GASCAN_INVENTORY_CONFIG_FILE='/home/percona/.config/gascan/inventory-config.json'
           export PS1="[${COLOR_CLIENT}${SSH_MS_NAME}${RESET}] ${COLOR_USER}\u${RESET}@${COLOR_HOST}${MONITOR_NAME}${RESET}: ${COLOR_DIR}\W ${RESET}\\$ ${COLOR_CMD}"
           export PATH=$PATH:/home/percona/bin
-
-          # For customers with passwordless below flag helps to run gascan without `--passwordless-sudo`
-          sudo -n true 2>/dev/null && export GASCAN_FLAG_PASSWORDLESS_SUDO=1
+          export GASCAN_FLAG_PASSWORDLESS_SUDO=1
     - name: Extracting `gascan` binary
       become_user: percona
       command: ~/bin/gascan --monitor=denis_test_delete --extract-bundle --extract-path=${HOME}
@@ -125,7 +123,7 @@
       command: /home/percona/bin/gascan -refresh -get-inventory
     - name: Running `gascan` initially with installation of PMM-server
       ansible.builtin.shell: |
-        /home/percona/bin/gascan --passwordless-sudo
+        /home/percona/bin/gascan 
       become_user: percona
       environment:
         SHELL: /bin/bash
