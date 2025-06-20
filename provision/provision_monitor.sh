@@ -55,16 +55,17 @@ sudo chown percona:percona /home/percona/.my.cnf
 sudo chmod 600 /home/percona/.my.cnf
 
 echo "[INFO] Sourcing .env file from /vagrant/config/.env if present..."
+# Parse .env and convert to --extra-vars format
 if [ -f /vagrant/config/.env ]; then
-  set -a
-  source /vagrant/config/.env
-  set +a
+  ENV_VARS=$(grep -v '^#' /vagrant/config/.env | xargs)
+else
+  ENV_VARS=""
 fi
 
 echo "[INFO] Running Ansible playbook for monitor configuration..."
 # Run the Ansible playbook for monitor configuration (idempotent)
 export ANSIBLE_HOST_KEY_CHECKING=False
-sudo ansible-playbook /vagrant/provision/playbook_monitor.yml -i localhost, || {
+sudo ansible-playbook /vagrant/provision/playbook_monitor.yml -i localhost, --extra-vars "$ENV_VARS" || {
   echo "[ERROR] Ansible playbook failed"; exit 1;
 }
 
