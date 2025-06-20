@@ -1,0 +1,125 @@
+---
+# This playbook configures the Gascan Monitor VM.
+#
+# All required secrets and configuration variables are sourced from the .env file at the project root.
+# Example .env file:
+#   USER_PUB_KEY='ssh-rsa ...'
+#   API_KEY=your_api_key_here
+#   CLIENT_IDENTIFIER=your_client_identifier_here
+#   GASCAN_VERSION=v1.10.0
+#   SSH_MS_NAME=denis_lab
+#   CUSTMER_ENV=denis_test_delete
+#
+# To run manually:
+#   set -a && source .env && set +a && ansible-playbook provision/playbook_monitor.yml
+#
+# Do not commit real secrets to version control.
+- name: Configure Monitor VM
+  hosts: localhost
+  connection: local
+  become: true
+  vars:
+    gascan_version: "{{ lookup('env', 'GASCAN_VERSION') }}"
+    ssh_ms_name: "{{ lookup('env', 'SSH_MS_NAME') }}"
+    custmer_env: "{{ lookup('env', 'CUSTMER_ENV') }}"
+    api_key: "{{ lookup('env', 'API_KEY') }}"
+    client_identifier: "{{ lookup('env', 'CLIENT_IDENTIFIER') }}"
+
+  tasks:
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - wget
+          - acl
+          - mysql-client-core-8.0
+        state: present
+        update_cache: true
+
+    - name: Enable lingering for the Percona user
+      ansible.builtin.command:
+        cmd: "loginctl enable-linger percona"
+      args:
+        creates: "/var/lib/systemd/linger/percona"
+
+    - name: Create bin directory in home
+      ansible.builtin.file:
+        path: "/home/percona/bin"
+        state: directory
+        mode: '0750'
+        owner: percona
+        group: percona
+
+    - name: Download gascan binary
+      ansible.builtin.get_url:
+        url: "https://cdba.percona.com/downloads/gascan/{{ gascan_version }}/linux/amd64/ubuntu-jammy/gascan-py3.10"
+        dest: "/home/percona/bin/gascan"
+        mode: '0764'
+        owner: percona
+        group: percona
+
+    - name: Update .bashrc for percona user with custom PS1 and env variables
+      ansible.builtin.blockinfile:
+        path: "/home/percona/.bashrc"
+        marker: "# {mark} Custom setup for gascan"
+        mode: '0764'
+        owner: percona
+        group: percona
+        block: |
+          # Set up a colorful prompt
+          RESET="\[\033[0m\]"
+          COLOR_USER="\[\033[0;36m\]"
+          COLOR_HOST="\[\033[1;31m\]"
+          COLOR_DIR="\[\033[0;33m\]"
+          COLOR_CMD="\[\033[0;37;00m\]"
+          COLOR_CLIENT="\[\033[1;32m\]"
+          MONITOR_NAME=monitor-gascan
+          SSH_MS_NAME={{ ssh_ms_name }}
+
+          # Useful aliases
+          alias avv="ansible-vault view ~/.config/gascan/secrets.yaml"
+          alias db_tree='PEX_SCRIPT=db_tree.py /home/percona/bin/gas-tools'
+
+          export ANSIBLE_VAULT_PASSWORD_FILE='/home/percona/.config/gascan/.vault-key' \
+          GASCAN_DEFAULT_INVENTORY=0 \
+          GASCAN_INVENTORY_CONFIG_FILE='/home/percona/.config/gascan/inventory-config.json'
+          export PS1="[${COLOR_CLIENT}${SSH_MS_NAME}${RESET}] ${COLOR_USER}\u${RESET}@${COLOR_HOST}${MONITOR_NAME}${RESET}: ${COLOR_DIR}\W ${RESET}\\$ ${COLOR_CMD}"
+          export PATH=$PATH:/home/percona/bin
+          export GASCAN_FLAG_PASSWORDLESS_SUDO=1
+
+    - name: Extracting gascan bundle (idempotent)
+      ansible.builtin.command:
+        cmd: "/home/percona/bin/gascan --monitor={{ custmer_env }} --extract-bundle --extract-path=/home/percona"
+      args:
+        creates: "/home/percona/.config/gascan/inventory-config.json"
+      become_user: percona
+      become: true
+
+    - name: Configure api_key and client_identifier for SN inventory connectivity
+      ansible.builtin.copy:
+        dest: "/home/percona/.config/gascan/inventory-config.json"
+        content: |
+          {
+            "headers": {
+              "CDBAng-Auth-Id": "{{ client_identifier }}",
+              "CDBAng-Auth-Token": "{{ api_key }}",
+              "CDBAng-Monitor-Name": "{{ custmer_env }}",
+              "Content-type": "application/json"
+            },
+            "key_file": "/home/percona/.config/gascan/.vault-key",
+            "retry_attempts": 3,
+            "retry_wait_seconds": 10,
+            "uri": "https://cdba.percona.com/ng/inventory"
+          }
+        owner: percona
+        group: percona
+        mode: '0600'
+
+    - name: Verify inventory from SN (optional, can be skipped in CI)
+      ansible.builtin.command:
+        cmd: "/home/percona/bin/gascan -refresh -get-inventory"
+      become_user: percona
+      become: true
+      register: gascan_inventory
+      failed_when: false
+      changed_when: false
+      ignore_errors: true
