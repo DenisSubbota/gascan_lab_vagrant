@@ -26,9 +26,12 @@ sudo mkdir -p /var/run/sshd
 sudo service ssh restart
 
 # Add user public key for SSH login
-USER_PUB_KEY='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDXyGc0wmF3gKrN/8pgh86gFMLfPXHwAc10JlwOndo749jnLzwo8JAHTd1kgLs7nCTJsQijMAcPz8W6RQMS2iVeH4Q4RjQNhuvMBWzQOmPynME4ZoSFuH7c6xycjKePbC2X/xFkKAf+GzG6zeM31Jm+AQaHsoVPCQiSNMs7QlQjZpvjNKFplpW2PVuXAGNH4eE3MtTgVJTQSvAPB2qwZQijruBtD5u9+fyY1esM9yuqIWka+hYbzhZrwLR//uLlLNpOafv/JUNWLONXJhBQAKw3/1Q1OhYOMZDitqEQx9CpEuSeeUuJSLqGZy4YHg+AiJDaDxdqz1kwOLGLPQ8S3mDV3fOB+C+VhuPjCXkIxEV+bq2XlDuUdlfAOn7+mZPstYbTbd68Zmje/H3JdinKHbFVv/I65G9kIj1wO90vXY1zFbfwyDHzUha+4QihmefBITztNbl57PBfM+u2k/Ck5exld9O5tE6JfCqm0jjV5hJc5rLZGBusbw9uxWnTc4Rgys3/hpLdCf5vbJCbHuCzq6lDzwT3Ii+BUQydTnigIAg6p6UmZ4hBsj7fcsJSWA5nk6nd4MwUUySNnPMgP66EikSy2Eh+HQVmJqcE5E5TldpsYBbTszl5XCwwu+sqmxsognfTh8RYHr+hQabBxFAi2LXJYaQpp3E1vSCOvcGZWAGoSw== denissubbota@Deniss-MBP.netis'
+# Export USER_PUB_KEY from /vagrant/config/.env if present
+if [ -f /vagrant/config/.env ]; then
+  export USER_PUB_KEY=$(grep '^USER_PUB_KEY=' /vagrant/config/.env | cut -d'=' -f2-)
+fi
 sudo -u percona mkdir -p /home/percona/.ssh
-if ! sudo grep -q "$USER_PUB_KEY" /home/percona/.ssh/authorized_keys 2>/dev/null; then
+if [ -n "$USER_PUB_KEY" ] && ! sudo grep -q "$USER_PUB_KEY" /home/percona/.ssh/authorized_keys 2>/dev/null; then
   echo "$USER_PUB_KEY" | sudo tee -a /home/percona/.ssh/authorized_keys
 fi
 sudo chown -R percona:percona /home/percona/.ssh
@@ -49,10 +52,10 @@ sudo bash -c 'cat <<EOF > /home/percona/.my.cnf
 [client]
 user=percona
 password=Percona1234
-host=localhost
 EOF'
 sudo chown percona:percona /home/percona/.my.cnf
 sudo chmod 600 /home/percona/.my.cnf
+
 
 echo "[INFO] Sourcing .env file from /vagrant/config/.env if present..."
 # Parse .env and convert to --extra-vars format
@@ -69,14 +72,11 @@ sudo ansible-playbook /vagrant/provision/playbook_monitor.yml -i localhost, --ex
   echo "[ERROR] Ansible playbook failed"; exit 1;
 }
 
+# Extract GASCAN* lines from percona's .bashrc to /tmp/.gascan_env
+sudo grep '^GASCAN' /home/percona/.bashrc | sudo tee /tmp/.gascan_env > /dev/null
+
 echo "[INFO] Running gascan as percona user..."
 # Run gascan as percona user with environment loaded
-sudo -u percona -i bash -c 'source ~/.bashrc && /home/percona/bin/gascan'
+sudo -u percona -i /bin/bash -c 'source /tmp/.gascan_env && /home/percona/bin/gascan'
 
 echo "[INFO] Monitor provisioning complete."
-
-# NOTE:
-# Environment variables for the percona user are set in .bashrc by the Ansible playbook.
-# For non-interactive commands, use:
-#   sudo -u percona -i bash -c 'source ~/.bashrc && <your_command>'
-# to ensure the environment is loaded. 

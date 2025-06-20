@@ -77,13 +77,13 @@
 
           # Useful aliases
           alias avv="ansible-vault view ~/.config/gascan/secrets.yaml"
-          alias db_tree='PEX_SCRIPT=db_tree.py /home/percona/bin/gas-tools'
+          alias db_tree='PEX_SCRIPT=db_tree.py ~/bin/gas-tools'
 
-          export ANSIBLE_VAULT_PASSWORD_FILE='/home/percona/.config/gascan/.vault-key' \
+          export ANSIBLE_VAULT_PASSWORD_FILE='~/.config/gascan/.vault-key' \
           GASCAN_DEFAULT_INVENTORY=0 \
-          GASCAN_INVENTORY_CONFIG_FILE='/home/percona/.config/gascan/inventory-config.json'
+          GASCAN_INVENTORY_CONFIG_FILE='~/.config/gascan/inventory-config.json'
           export PS1="[${COLOR_CLIENT}${SSH_MS_NAME}${RESET}] ${COLOR_USER}\u${RESET}@${COLOR_HOST}${MONITOR_NAME}${RESET}: ${COLOR_DIR}\W ${RESET}\\$ ${COLOR_CMD}"
-          export PATH=$PATH:/home/percona/bin
+          export PATH=$PATH:~/bin
           export GASCAN_FLAG_PASSWORDLESS_SUDO=1
 
     - name: Extracting gascan bundle (idempotent)
