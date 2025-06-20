@@ -143,9 +143,9 @@ cat <<EOF > .env
 USER_PUB_KEY='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdummykeyhere user@host'
 API_KEY=your_api_key_here
 CLIENT_IDENTIFIER=your_client_identifier_here
-GASCAN_VERSION=v1.10.0
-SSH_MS_NAME=denis_lab
-CUSTMER_ENV=denis_test_delete
+GASCAN_VERSION=v1.30.0
+SSH_MS_NAME=lab_name-gascan
+CUSTMER_ENV=lab_name_SN-gascan
 EOF
 ```
 
@@ -155,8 +155,8 @@ USER_PUB_KEY='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdummykeyhere user@host'
 API_KEY=your_api_key_here
 CLIENT_IDENTIFIER=your_client_identifier_here
 GASCAN_VERSION=v1.10.0
-SSH_MS_NAME=denis_lab
-CUSTMER_ENV=denis_test_delete
+SSH_MS_NAME=lab_name-gascan
+CUSTMER_ENV=lab_name_SN-gascan
 ```
 - `USER_PUB_KEY`: The SSH public key used for provisioning and secure access by the monitor node and/or other automation (replace with your real key).
 - `API_KEY`, `CLIENT_IDENTIFIER`: Secrets for the monitor node's Ansible playbook or other automation.
