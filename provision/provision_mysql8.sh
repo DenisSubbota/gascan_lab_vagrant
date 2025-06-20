@@ -58,7 +58,7 @@ done
 sudo mysql < /vagrant/provision/mysql_users.sql
 
 # Set up replication from mysql57 (source)
-sudo mysql -e "STOP SLAVE; RESET SLAVE ALL; CHANGE MASTER TO MASTER_HOST='192.168.36.157', MASTER_PORT=3306, MASTER_USER='repl_user', MASTER_PASSWORD='repl_password', MASTER_AUTO_POSITION=1; START SLAVE;"
+sudo mysql -e "STOP SLAVE; RESET SLAVE ALL; CHANGE MASTER TO MASTER_HOST='192.168.56.157', MASTER_PORT=3306, MASTER_USER='repl_user', MASTER_PASSWORD='repl_password', MASTER_AUTO_POSITION=1; START SLAVE;"
 
 # Print status
 sudo mysql -e "SHOW SLAVE STATUS\\G"

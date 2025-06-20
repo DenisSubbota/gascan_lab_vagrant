@@ -22,10 +22,10 @@ This lab provides a fully automated MySQL replication environment using Vagrant 
    Edit the `machines` array in the `Vagrantfile` to set per-VM memory, CPUs, and bring-up order:
    ```ruby
    machines = [
-     { name: "monitor", ip: "192.168.36.100", provision: "provision/provision_monitor.sh", memory: 1024, cpus: 1, order: 1 },
-     { name: "mysql57", ip: "192.168.36.157", provision: "provision/provision_mysql57.sh", memory: 2048, cpus: 2, order: 2 },
-     { name: "mysql8", ip: "192.168.36.180", provision: "provision/provision_mysql8.sh", memory: 2048, cpus: 2, order: 3 },
-     { name: "mysql84", ip: "192.168.36.184", provision: "provision/provision_mysql84.sh", memory: 2048, cpus: 2, order: 4 }
+     { name: "monitor", ip: "192.168.56.100", provision: "provision/provision_monitor.sh", memory: 6144, cpus: 4, order: 1 },
+     { name: "mysql57", ip: "192.168.56.157", provision: "provision/provision_mysql57.sh", memory: 512, cpus: 2, order: 2 },
+     { name: "mysql8", ip: "192.168.56.180", provision: "provision/provision_mysql8.sh", memory: 512, cpus: 2, order: 3 },
+     { name: "mysql84", ip: "192.168.56.184", provision: "provision/provision_mysql84.sh", memory: 512, cpus: 2, order: 4 }
    ]
    ```
 
@@ -46,10 +46,10 @@ This lab provides a fully automated MySQL replication environment using Vagrant 
    ```
 
 5. **VM Networking:**
-   - monitor: 192.168.36.100
-   - mysql57: 192.168.36.157
-   - mysql8:  192.168.36.180
-   - mysql84: 192.168.36.184
+   - monitor: 192.168.56.100
+   - mysql57: 192.168.56.157
+   - mysql8:  192.168.56.180
+   - mysql84: 192.168.56.184
 
 6. **Customizing Provisioning:**
    - Edit scripts in `provision/` to change how each VM is set up.

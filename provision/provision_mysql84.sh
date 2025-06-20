@@ -58,7 +58,7 @@ done
 sudo mysql < /vagrant/provision/mysql_users.sql
 
 # Set up replication from mysql8 (intermediate)
-sudo mysql -e "STOP REPLICA; RESET REPLICA ALL; CHANGE REPLICATION SOURCE TO SOURCE_HOST='192.168.36.180', SOURCE_PORT=3306, SOURCE_USER='repl_user', SOURCE_PASSWORD='repl_password', SOURCE_AUTO_POSITION=1; START REPLICA;"
+sudo mysql -e "STOP REPLICA; RESET REPLICA ALL; CHANGE REPLICATION SOURCE TO SOURCE_HOST='192.168.56.180', SOURCE_PORT=3306, SOURCE_USER='repl_user', SOURCE_PASSWORD='repl_password', SOURCE_AUTO_POSITION=1; START REPLICA;"
 
 # Print status
 sudo mysql -e "SHOW REPLICA STATUS\\G"
