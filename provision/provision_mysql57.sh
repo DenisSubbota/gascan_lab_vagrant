@@ -6,7 +6,7 @@ set -euo pipefail
 # TODO: Move hardcoded passwords to environment variables for better security
 
 sudo apt-get update
-sudo apt-get install -y wget lsb-release gnupg2 openssh-server sudo
+sudo apt-get install -y wget lsb-release
 
 # Install Percona Server 5.7 if not already installed
 if ! dpkg -l | grep -q percona-server-server-5.7; then
@@ -38,10 +38,6 @@ host=localhost
 EOF'
 sudo chown percona:percona /home/percona/.my.cnf
 sudo chmod 600 /home/percona/.my.cnf
-
-# Setup SSH server
-sudo mkdir -p /var/run/sshd
-sudo service ssh restart
 
 # Add monitor's public key to authorized_keys for percona
 if [ -f /vagrant/provision/monitor_id_rsa.pub ]; then
