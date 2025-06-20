@@ -54,6 +54,13 @@ EOF'
 sudo chown percona:percona /home/percona/.my.cnf
 sudo chmod 600 /home/percona/.my.cnf
 
+echo "[INFO] Sourcing .env file from /vagrant/config/.env if present..."
+if [ -f /vagrant/config/.env ]; then
+  set -a
+  source /vagrant/config/.env
+  set +a
+fi
+
 echo "[INFO] Running Ansible playbook for monitor configuration..."
 # Run the Ansible playbook for monitor configuration (idempotent)
 export ANSIBLE_HOST_KEY_CHECKING=False

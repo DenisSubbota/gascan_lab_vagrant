@@ -72,19 +72,19 @@ This lab provides a fully automated MySQL replication environment using Vagrant 
 
 ## Monitor Node Provisioning & Secrets
 
-The monitor node uses an Ansible playbook for advanced configuration. Secrets (API keys, client identifiers) are now provided via environment variables using a `.env` file.
+The monitor node uses an Ansible playbook for advanced configuration. Secrets (API keys, client identifiers) are now provided via environment variables using a `.env` file placed in the `config/` directory.
 
-1. **Create a `.env` file in the `provision/` directory:**
+1. **Create a `.env` file in the `config/` directory:**
    ```env
    API_KEY=your_api_key_here
    CLIENT_IDENTIFIER=your_client_identifier_here
    ```
 
 2. **Provision the monitor node (automatically done by Vagrant):**
-   The provisioning script will run the Ansible playbook. If you need to run it manually:
+   The provisioning script will source `/vagrant/config/.env` before running the Ansible playbook. If you need to run it manually:
    ```sh
    set -a
-   source provision/.env
+   source /vagrant/config/.env
    set +a
    ansible-playbook provision/playbook_monitor.yml
    ```
@@ -135,11 +135,11 @@ vagrant destroy   # Destroy all VMs
 
 ## Environment Variables and Secrets (.env)
 
-This lab uses a single `.env` file at the project root to provide environment variables for provisioning, secrets management, and automation. This file is **not** committed to version control and should be created/edited by the user as needed.
+This lab uses a single `.env` file in the `config/` directory to provide environment variables for provisioning, secrets management, and automation. This file is **not** committed to version control and should be created/edited by the user as needed.
 
 **To create a .env file quickly:**
 ```sh
-cat <<EOF > .env
+cat <<EOF > config/.env
 USER_PUB_KEY='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdummykeyhere user@host'
 API_KEY=your_api_key_here
 CLIENT_IDENTIFIER=your_client_identifier_here
@@ -149,7 +149,7 @@ CUSTMER_ENV=lab_name_SN-gascan
 EOF
 ```
 
-**Example .env file:**
+**Example config/.env file:**
 ```env
 USER_PUB_KEY='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdummykeyhere user@host'
 API_KEY=your_api_key_here
@@ -165,11 +165,11 @@ CUSTMER_ENV=lab_name_SN-gascan
 - `CUSTMER_ENV`: Environment or customer name for gascan and inventory configuration.
 
 **Usage:**
-- The `.env` file is automatically sourced by provisioning scripts and the monitor node's Ansible playbook.
+- The `.env` file is automatically sourced by provisioning scripts and the monitor node's Ansible playbook from `/vagrant/config/.env`.
 - To manually source the environment for Ansible or scripts:
   ```sh
   set -a
-  source .env
+  source /vagrant/config/.env
   set +a
   ansible-playbook provision/playbook_monitor.yml
   ```
