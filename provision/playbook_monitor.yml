@@ -80,7 +80,7 @@
           alias db_tree='PEX_SCRIPT=db_tree.py ~/bin/gas-tools'
 
           export ANSIBLE_VAULT_PASSWORD_FILE='~/.config/gascan/.vault-key' 
-          export GASCAN_DEFAULT_INVENTORY=0 )
+          export GASCAN_DEFAULT_INVENTORY=0 
           export GASCAN_INVENTORY_CONFIG_FILE='~/.config/gascan/inventory-config.json'
           export PS1="[${COLOR_CLIENT}${SSH_MS_NAME}${RESET}] ${COLOR_USER}\u${RESET}@${COLOR_HOST}${MONITOR_NAME}${RESET}: ${COLOR_DIR}\W ${RESET}\\$ ${COLOR_CMD}"
           export PATH=$PATH:~/bin
