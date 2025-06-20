@@ -73,7 +73,7 @@ sudo ansible-playbook /vagrant/provision/playbook_monitor.yml -i localhost, --ex
 }
 
 # Extract GASCAN* lines from percona's .bashrc to /tmp/.gascan_env
-sudo grep '^GASCAN' /home/percona/.bashrc | sudo tee /tmp/.gascan_env > /dev/null
+sudo egrep 'ANSIBLE_VAULT_PASSWORD_FILE|GASCAN_DEFAULT_INVENTORY|GASCAN_INVENTORY_CONFIG_FILE|GASCAN_FLAG_PASSWORDLESS_SUDO' /home/percona/.bashrc | sudo tee /tmp/.gascan_env > /dev/null
 
 echo "[INFO] Running gascan as percona user..."
 # Run gascan as percona user with environment loaded
