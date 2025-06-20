@@ -77,6 +77,6 @@ sudo egrep 'ANSIBLE_VAULT_PASSWORD_FILE|GASCAN_DEFAULT_INVENTORY|GASCAN_INVENTOR
 
 echo "[INFO] Running gascan as percona user..."
 # Run gascan as percona user with environment loaded
-sudo -u percona -i /bin/bash -c 'source /tmp/.gascan_env && /home/percona/bin/gascan'
+sudo -u percona -i /bin/bash -c 'source /tmp/.gascan_env && /home/percona/bin/gascan --limit=monitors'
 
 echo "[INFO] Monitor provisioning complete."
