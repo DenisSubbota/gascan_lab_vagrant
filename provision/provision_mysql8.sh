@@ -34,10 +34,6 @@ EOF'
 sudo chown percona:percona /home/percona/.my.cnf
 sudo chmod 600 /home/percona/.my.cnf
 
-# Setup SSH server
-sudo mkdir -p /var/run/sshd
-sudo service ssh restart
-
 # Add monitor's public key to authorized_keys for percona
 if [ -f /vagrant/provision/monitor_id_rsa.pub ]; then
     sudo -u percona mkdir -p /home/percona/.ssh
@@ -46,12 +42,10 @@ if [ -f /vagrant/provision/monitor_id_rsa.pub ]; then
     sudo chmod 700 /home/percona/.ssh
     sudo chmod 600 /home/percona/.ssh/authorized_keys
 fi
-
 # Copy custom config from config directory
-sudo mkdir -p /etc/mysql/mysql.conf.d
-sudo cp /vagrant/config/mysql8.cnf /etc/mysql/mysql.conf.d/mysqld.cnf
-sudo chown mysql:mysql /etc/mysql/mysql.conf.d/mysqld.cnf
-sudo chmod 644 /etc/mysql/mysql.conf.d/mysqld.cnf
+sudo cp /vagrant/config/mysql8.cnf /etc/my.cnf
+sudo chown mysql:mysql /etc/my.cnf
+sudo chmod 644 /etc/my.cnf
 
 # Start MySQL
 sudo service mysql start

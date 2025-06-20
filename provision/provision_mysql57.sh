@@ -49,10 +49,9 @@ if [ -f /vagrant/provision/monitor_id_rsa.pub ]; then
 fi
 
 # Copy custom config from config directory
-sudo mkdir -p /etc/mysql/mysql.conf.d
-sudo cp /vagrant/config/mysql57.cnf /etc/mysql/mysql.conf.d/mysqld.cnf
-sudo chown mysql:mysql /etc/mysql/mysql.conf.d/mysqld.cnf
-sudo chmod 644 /etc/mysql/mysql.conf.d/mysqld.cnf
+sudo cp /vagrant/config/mysql57.cnf /etc/my.cnf
+sudo chown mysql:mysql /etc/my.cnf
+sudo chmod 644 /etc/my.cnf
 
 # Start MySQL
 sudo service mysql start
