@@ -3,10 +3,17 @@ set -euo pipefail
 
 # [INFO] Starting MySQL 8.4 provisioning
 
-# TODO: Move hardcoded passwords to environment variables for better security
-
+# Install Percona Server 8.4
 sudo apt-get update
-sudo apt-get install -y mysql-server openssh-server sudo
+sudo apt-get install -y gnupg2 wget lsb-release
+wget https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.deb
+sudo dpkg -i percona-release_latest.$(lsb_release -sc)_all.deb
+sudo percona-release enable-only ps-84-lts release
+sudo apt-get update
+export DEBIAN_FRONTEND=noninteractive
+sudo apt-get install -y percona-server-server
+
+# TODO: Move hardcoded passwords to environment variables for better security
 
 # Create percona user with passwordless sudo
 if ! id percona &>/dev/null; then
