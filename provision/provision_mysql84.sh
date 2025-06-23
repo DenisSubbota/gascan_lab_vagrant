@@ -10,8 +10,7 @@ wget https://repo.percona.com/apt/percona-release_latest.$(lsb_release -sc)_all.
 sudo dpkg -i percona-release_latest.$(lsb_release -sc)_all.deb
 sudo percona-release enable-only ps-84-lts release
 sudo apt-get update
-export DEBIAN_FRONTEND=noninteractive
-sudo apt-get install -y percona-server-server
+sudo -E DEBIAN_FRONTEND=noninteractive apt-get install -y percona-server-server
 
 # TODO: Move hardcoded passwords to environment variables for better security
 

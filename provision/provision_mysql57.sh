@@ -17,7 +17,7 @@ if ! dpkg -l | grep -q percona-server-server-5.7; then
     # Preseed debconf to skip root password prompt
     echo "percona-server-server-5.7 percona-server-server/root_password password" | sudo debconf-set-selections
     echo "percona-server-server-5.7 percona-server-server/root_password_again password" | sudo debconf-set-selections
-    DEBIAN_FRONTEND=noninteractive sudo apt-get install -y percona-server-server-5.7
+    sudo -E DEBIAN_FRONTEND=noninteractive apt-get install -y percona-server-server-5.7
 fi
 
 # Create percona user with passwordless sudo
