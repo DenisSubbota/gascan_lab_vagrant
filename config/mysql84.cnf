@@ -22,7 +22,7 @@ server-id = 3
 log-bin = mysql-bin
 binlog_format = ROW
 binlog_row_image = FULL
-expire_logs_days = 7
+binlog_expire_logs_seconds = 2592000
 max_binlog_size = 100M
 sync_binlog = 1
 
@@ -49,7 +49,6 @@ wait_timeout = 28800
 interactive_timeout = 28800
 
 # MySQL 8.4 Specific Settings
-default_authentication_plugin = mysql_native_password
 mysqlx_port = 33060
 mysqlx_socket = /var/run/mysqld/mysqlx.sock
 
