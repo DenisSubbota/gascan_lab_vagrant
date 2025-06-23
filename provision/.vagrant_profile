@@ -1,0 +1,2 @@
+# Automatically switch to percona user on login
+sudo su - percona 

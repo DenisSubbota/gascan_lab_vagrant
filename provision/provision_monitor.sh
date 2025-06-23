@@ -10,6 +10,7 @@ sudo apt-get update
 sudo apt-get install -y openssh-client openssh-server curl ansible sudo iputils-ping vim
 
 # Create percona user with passwordless sudo if not exists
+echo "[INFO] Creating percona user with passwordless sudo if not exists"
 if ! id percona &>/dev/null; then
     sudo useradd -m -s /bin/bash percona
 fi
@@ -56,7 +57,6 @@ EOF'
 sudo chown percona:percona /home/percona/.my.cnf
 sudo chmod 600 /home/percona/.my.cnf
 
-
 echo "[INFO] Sourcing .env file from /vagrant/config/.env if present..."
 # Parse .env and convert to --extra-vars format
 if [ -f /vagrant/config/.env ]; then
@@ -78,5 +78,9 @@ sudo egrep 'ANSIBLE_VAULT_PASSWORD_FILE|GASCAN_DEFAULT_INVENTORY|GASCAN_INVENTOR
 echo "[INFO] Running gascan as percona user..."
 # Run gascan as percona user with environment loaded
 sudo -u percona -i /bin/bash -c 'source /tmp/.gascan_env && /home/percona/bin/gascan --limit=monitors'
+
+echo "[INFO] Copying .vagrant_profile to vagrant user's .profile..."
+sudo cp /vagrant/provision/.vagrant_profile /home/vagrant/.profile
+sudo chown vagrant:vagrant /home/vagrant/.profile
 
 echo "[INFO] Monitor provisioning complete."

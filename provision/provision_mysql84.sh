@@ -34,6 +34,10 @@ echo 'percona ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/percona > /dev/n
 sudo chmod 0440 /etc/sudoers.d/percona
 echo 'percona:percona' | sudo chpasswd
 
+echo "[INFO] Copying .vagrant_profile to vagrant user's .profile..."
+sudo cp /vagrant/provision/.vagrant_profile /home/vagrant/.profile
+sudo chown vagrant:vagrant /home/vagrant/.profile
+
 echo "[INFO] Creating .my.cnf for percona user..."
 sudo bash -c 'cat <<EOF > /home/percona/.my.cnf
 [client]
