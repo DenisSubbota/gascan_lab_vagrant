@@ -48,9 +48,9 @@ fi
 
 # Copy custom config from config directory
 
-sudo cp /vagrant/config/mysql84.cnf /etc/my.cnf
-sudo chown mysql:mysql /etc/my.cnf
-sudo chmod 644 /etc/my.cnf
+sudo cp /vagrant/config/mysql84.cnf /etc/mysql/my.cnf
+sudo chown mysql:mysql /etc/mysql/my.cnf
+sudo chmod 644 /etc/mysql/my.cnf
 # Start MySQL
 sudo service mysql start
 

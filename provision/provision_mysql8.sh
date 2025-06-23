@@ -42,9 +42,9 @@ if [ -f /vagrant/provision/monitor_id_rsa.pub ]; then
     sudo chmod 600 /home/percona/.ssh/authorized_keys
 fi
 # Copy custom config from config directory
-sudo cp /vagrant/config/mysql8.cnf /etc/my.cnf
-sudo chown mysql:mysql /etc/my.cnf
-sudo chmod 644 /etc/my.cnf
+sudo cp /vagrant/config/mysql8.cnf /etc/mysql/my.cnf
+sudo chown mysql:mysql /etc/mysql/my.cnf
+sudo chmod 644 /etc/mysql/my.cnf
 
 # Start MySQL
 sudo service mysql start
