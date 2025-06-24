@@ -1,207 +1,78 @@
-# MySQL Replication & ProxySQL Cluster Lab with Vagrant
+# MySQL Replication & ProxySQL Cluster Lab (Vagrant)
 
-This lab provides a fully automated MySQL replication and ProxySQL cluster environment using Vagrant and Ubuntu 22.04 VMs. Each node is provisioned with the correct MySQL version, custom configuration, and replication setup. The monitor node is also provisioned for orchestration and management. ProxySQL nodes are clustered and pre-configured to route to all MySQL nodes.
+## What is this?
+A Vagrant-based lab for MySQL replication (5.7 → 8.0 → 8.4) and a 2-node ProxySQL cluster, with a monitor node for orchestration. All provisioning is automated.
 
-## Features
-- 6 Ubuntu 22.04 VMs: monitor, proxysql1, proxysql2, mysql57, mysql8, mysql84
-- ProxySQL cluster (2 nodes) with config-driven MySQL backend registration
-- Per-VM resource configuration (memory, CPUs)
-- Custom configs for each MySQL node
-- Automatic replication setup (5.7 → 8.0 → 8.4)
-- Monitor node with Ansible, SSH tools, and public key management
-- All nodes on a private network with static IPs/hostnames
-- Fully automated provisioning via shell scripts
+## VMs & IPs
+| Name       | IP              | Role         |
+|------------|-----------------|-------------|
+| monitor    | 192.168.56.100  | Orchestration, Ansible, SSH mgmt |
+| proxysql1  | 192.168.56.101  | ProxySQL cluster node 1          |
+| proxysql2  | 192.168.56.102  | ProxySQL cluster node 2          |
+| mysql57    | 192.168.56.157  | MySQL 5.7                        |
+| mysql8     | 192.168.56.180  | MySQL 8.0                         |
+| mysql84    | 192.168.56.184  | MySQL 8.4                         |
 
 ## Quick Start
-
-1. **Clone this repo and enter the lab directory:**
+1. **Clone and enter the lab:**
    ```sh
+   git clone <repo-url>
    cd gascan_lab_vagrant
    ```
-
-2. **Review and adjust VM resources and order (optional):**
-   Edit the `machines` array in the `Vagrantfile` to set per-VM memory, CPUs, and bring-up order:
-   ```ruby
-   machines = [
-     { name: "monitor", ip: "192.168.56.100", provision: "provision/provision_monitor.sh", memory: 6144, cpus: 4, order: 1 },
-     { name: "proxysql1", ip: "192.168.56.101", provision: "provision/provision_proxysql1.sh", memory: 1024, cpus: 2, order: 2 },
-     { name: "proxysql2", ip: "192.168.56.102", provision: "provision/provision_proxysql2.sh", memory: 1024, cpus: 2, order: 3 },
-     { name: "mysql57", ip: "192.168.56.157", provision: "provision/provision_mysql57.sh", memory: 1024, cpus: 2, order: 4 },
-     { name: "mysql8", ip: "192.168.56.180", provision: "provision/provision_mysql8.sh", memory: 1024, cpus: 2, order: 5 },
-     { name: "mysql84", ip: "192.168.56.184", provision: "provision/provision_mysql84.sh", memory: 1024, cpus: 2, order: 6 }
-   ]
-   ```
-
-3. **Bring up the lab (serial startup recommended):**
-   To ensure correct provisioning order, run:
+2. **(Optional) Edit VM resources/order in `Vagrantfile`.**
+3. **Create a `.env` file in `config/` (see below).**
+4. **Start the lab (serial recommended):**
    ```sh
    vagrant up --no-parallel
-   # or, for strict serial startup:
+   # or strict order:
    for vm in monitor proxysql1 proxysql2 mysql57 mysql8 mysql84; do vagrant up $vm; done
    ```
-
-4. **Access VMs:**
+5. **SSH into any VM:**
    ```sh
-   vagrant ssh monitor
-   vagrant ssh proxysql1
-   vagrant ssh proxysql2
-   vagrant ssh mysql57
-   vagrant ssh mysql8
-   vagrant ssh mysql84
+   vagrant ssh monitor   # or any other node
    ```
 
-5. **VM Networking:**
-   - monitor:   192.168.56.100
-   - proxysql1: 192.168.56.101
-   - proxysql2: 192.168.56.102
-   - mysql57:   192.168.56.157
-   - mysql8:    192.168.56.180
-   - mysql84:   192.168.56.184
+## ProxySQL Usage
+- Admin interface: `mysql` (as `percona` user, auto-switched on login)
+- Config files: `/vagrant/config/proxysql1.cnf`, `/vagrant/config/proxysql2.cnf`
+- Cluster is pre-configured; MySQL backends are auto-registered
 
-6. **Customizing Provisioning:**
-   - Edit scripts in `provision/` to change how each VM is set up.
-   - Shared scripts/configs are in `/lab_scripts` inside each VM (from `mysql_replication_setup/`).
+## MySQL Usage
+- `mysql` as `percona` user (auto-switched on login)
+- Each node has a `.my.cnf` with a prompt showing the node name
 
-## ProxySQL Cluster
-- ProxySQL 3.x is deployed on `proxysql1` and `proxysql2` (IPs above).
-- Both nodes are configured as a cluster and are aware of all MySQL backends.
-- Configuration is provided via `/vagrant/config/proxysql1.cnf` and `/vagrant/config/proxysql2.cnf`.
-- Admin interface is available on port 6032 (localhost only).
-- The `percona` user is created on each ProxySQL node for admin access.
-- After SSHing into a ProxySQL node, switch to the `percona` user for admin tasks:
-  ```sh
-  sudo -i -u percona
-  mysql   # connects to ProxySQL admin interface using .my.cnf
-  ```
-- The `vagrant` user is auto-switched to `percona` on login via `.profile`.
-- Only the `percona` user has a `.my.cnf` for passwordless admin login.
-
-## Directory Structure
-- `Vagrantfile` — Vagrant configuration for the lab
-- `provision/` — Provisioning scripts for each VM
-- `provision/playbook_monitor.yml` — Ansible playbook for monitor node
-- `provision/mysql_users.sql` — MySQL/replication user setup SQL
-- `config/` — MySQL and ProxySQL configuration files
-- `High_level_plan.md` — Advanced scenarios, topology ideas, and manual steps
-
-## How It Works
-- Each VM is provisioned with the correct MySQL version and configuration.
-- Replication users and monitoring users are created automatically.
-- Replication is set up automatically during provisioning.
-- The monitor node manages SSH keys and can orchestrate the environment.
-- ProxySQL nodes are clustered and pre-configured to route to all MySQL backends.
-- **Environment variables for the `percona` user are set in `.bashrc` by the Ansible playbook. For non-interactive commands, use `sudo -u percona -i <command>` to ensure the environment is loaded.**
-
-## Monitor Node Provisioning & Secrets
-
-The monitor node uses an Ansible playbook for advanced configuration. Secrets (API keys, client identifiers) are now provided via environment variables using a `.env` file placed in the `config/` directory.
-
-1. **Create a `.env` file in the `config/` directory:**
-   ```env
-   API_KEY=your_api_key_here
-   CLIENT_IDENTIFIER=your_client_identifier_here
-   ```
-
-2. **Provision the monitor node (automatically done by Vagrant):**
-   The provisioning script will source `/vagrant/config/.env` before running the Ansible playbook. If you need to run it manually:
-   ```sh
-   set -a
-   source /vagrant/config/.env
-   set +a
-   ansible-playbook provision/playbook_monitor.yml
-   ```
-
-- The playbook will read `API_KEY` and `CLIENT_IDENTIFIER` from the environment.
-- **Do not commit real secrets to version control.**
-
-## Stopping and Cleaning Up
-```sh
-vagrant halt      # Stop all VMs
-vagrant destroy   # Destroy all VMs
-```
-
-## Usage Examples
-
-- Connect to ProxySQL admin interface (as percona user):
-  ```sh
-  vagrant ssh proxysql1
-  # You will be auto-switched to percona user
-  mysql   # connects to ProxySQL admin interface on 127.0.0.1:6032
-  ```
-
-- Connect to MySQL 8.0 node:
-  ```sh
-  vagrant ssh mysql8
-  mysql
-  ```
-
-- Check replication status:
-  ```sh
-  mysql -e 'SHOW SLAVE STATUS\G'
-  ```
-
-## Troubleshooting
-- Check provisioning logs in the Vagrant output.
-- For custom scripts/configs, edit files in `mysql_replication_setup/`.
-- If a VM fails to start, check for duplicate IPs or hostnames in the Vagrantfile.
-- If MySQL or ProxySQL won't connect, check the config files in `config/` and the logs in `/var/log/mysql/` or `/var/log/proxysql/` inside the VM.
-
-## Customization Tips
-- To add more VMs, copy and modify an entry in the `machines` array in the Vagrantfile.
-- To change MySQL or ProxySQL versions, update the provisioning scripts and config files as needed.
-- To customize passwords, move them to environment variables or a config file for better security.
-- Add `.env` to your `.gitignore` to avoid committing secrets.
-
-## File Overview
-| File/Dir                | Purpose                                      |
-|------------------------|----------------------------------------------|
-| Vagrantfile            | Main Vagrant configuration                   |
-| provision/             | All provisioning scripts and configs         |
-| provision/playbook_monitor.yml | Ansible playbook for monitor node      |
-| provision/mysql_users.sql      | MySQL/replication user setup SQL       |
-| config/                | MySQL and ProxySQL configuration files       |
-| High_level_plan.md     | Advanced scenarios and topology ideas        |
-
-## Environment Variables and Secrets (.env)
-
-This lab uses a single `.env` file in the `config/` directory to provide environment variables for provisioning, secrets management, and automation. This file is **not** committed to version control and should be created/edited by the user as needed.
-
-**To create a .env file quickly:**
-```sh
-cat <<EOF > config/.env
-USER_PUB_KEY='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdummykeyhere user@host'
+## .env Example (`config/.env`)
+```env
+USER_PUB_KEY='ssh-rsa ...yourkey...'
 API_KEY=your_api_key_here
 CLIENT_IDENTIFIER=your_client_identifier_here
 GASCAN_VERSION=v1.30.0
 SSH_MS_NAME=lab_name-gascan
 CUSTMER_ENV=lab_name_SN-gascan
-EOF
+```
+- Required for monitor node provisioning and SSH key setup
+
+## Stopping & Cleanup
+```sh
+vagrant halt      # Stop all VMs
+vagrant destroy   # Destroy all VMs
 ```
 
-**Example config/.env file:**
-```env
-USER_PUB_KEY='ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDdummykeyhere user@host'
-API_KEY=your_api_key_here
-CLIENT_IDENTIFIER=your_client_identifier_here
-GASCAN_VERSION=v1.10.0
-SSH_MS_NAME=lab_name-gascan
-CUSTMER_ENV=lab_name_SN-gascan
-```
-- `USER_PUB_KEY`: The SSH public key used for provisioning and secure access by the monitor node and/or other automation (replace with your real key).
-- `API_KEY`, `CLIENT_IDENTIFIER`: Secrets for the monitor node's Ansible playbook or other automation.
-- `GASCAN_VERSION`: Version of the gascan binary to download and use.
-- `SSH_MS_NAME`: Custom SSH prompt/monitor name for the monitor node.
-- `CUSTMER_ENV`: Environment or customer name for gascan and inventory configuration.
+## Troubleshooting
+- Check Vagrant output for provisioning errors
+- Check `/var/log/mysql/` or `/var/log/proxysql/` inside VMs
+- If a VM fails to start, check for duplicate IPs/hostnames in `Vagrantfile`
+- If you can't SSH, check your `.env` public key and Vagrant status
 
-**Usage:**
-- The `.env` file is automatically sourced by provisioning scripts and the monitor node's Ansible playbook from `/vagrant/config/.env`.
-- To manually source the environment for Ansible or scripts:
-  ```sh
-  set -a
-  source /vagrant/config/.env
-  set +a
-  ansible-playbook provision/playbook_monitor.yml
-  ```
-- **Do not commit real secrets to version control.**
+## Directory Structure
+- `Vagrantfile` — VM definitions
+- `provision/` — All provisioning scripts
+- `config/` — MySQL & ProxySQL config files
+- `High_level_plan.md` — Advanced scenarios
+
+## Customization
+- Add/modify VMs in `Vagrantfile`
+- Edit provisioning scripts in `provision/`
+- Change passwords/secrets in `.env` (never commit real secrets)
 
 ---
