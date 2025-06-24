@@ -1,0 +1,53 @@
+datadir="/var/lib/proxysql"
+
+admin_variables=
+{
+    admin_credentials="admin:admin;percona:password"
+    mysql_ifaces="0.0.0.0:6032"
+    cluster_username="percona"
+    cluster_password="password"
+}
+
+proxysql_servers =
+(
+    {
+        hostname="192.168.56.101"
+        port=6032
+        comment="proxysql1"
+    },
+    {
+        hostname="192.168.56.102"
+        port=6032
+        comment="proxysql2"
+    }
+)
+
+mysql_replication_hostgroups=
+(
+    {
+        writer_hostgroup=10
+        reader_hostgroup=11
+    }
+)
+
+mysql_servers =
+(
+    {
+        address="192.168.56.157"
+        port=3306
+        hostgroup=10
+        comment="mysql57"
+    },
+    {
+        address="192.168.56.180"
+        port=3306
+        hostgroup=11
+        comment="mysql8"
+    },
+    {
+        address="192.168.56.184"
+        port=3306
+        hostgroup=11
+        comment="mysql84"
+    }
+) 
