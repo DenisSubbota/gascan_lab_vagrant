@@ -53,6 +53,18 @@ echo "[proxysql1] Copying ProxySQL config..."
 sudo cp /vagrant/config/proxysql1.cnf /etc/proxysql.cnf
 sudo chown proxysql:proxysql /etc/proxysql.cnf
 
+echo "[proxysql1] Creating .my.cnf for percona user..."
+cat <<EOF | sudo tee /home/percona/.my.cnf > /dev/null
+[client]
+user=percona
+password=password
+host=127.0.0.1
+port=6032
+prompt=proxysql1> 
+EOF
+sudo chown percona:percona /home/percona/.my.cnf
+sudo chmod 600 /home/percona/.my.cnf
+
 echo "[proxysql1] Starting ProxySQL with new config..."
 sudo systemctl start proxysql
 
@@ -65,17 +77,5 @@ LOAD PROXYSQL SERVERS TO RUNTIME;\
 SAVE MYSQL SERVERS TO DISK;\
 SAVE PROXYSQL SERVERS TO DISK;\
 "
-
-echo "[proxysql1] Creating .my.cnf for percona user..."
-cat <<EOF | sudo tee /home/percona/.my.cnf > /dev/null
-[client]
-user=percona
-password=password
-host=127.0.0.1
-port=6032
-prompt=proxysql1> 
-EOF
-sudo chown percona:percona /home/percona/.my.cnf
-sudo chmod 600 /home/percona/.my.cnf
 
 echo "[proxysql1] Provisioning complete."
