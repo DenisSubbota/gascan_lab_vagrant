@@ -57,6 +57,7 @@ sudo bash -c 'cat <<EOF > /home/percona/.my.cnf
 user=percona
 password=Percona1234
 host=localhost
+prompt=mysql57> 
 EOF'
 sudo chown percona:percona /home/percona/.my.cnf
 sudo chmod 600 /home/percona/.my.cnf

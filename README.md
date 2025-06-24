@@ -1,9 +1,10 @@
-# MySQL Replication Lab with Vagrant
+# MySQL Replication & ProxySQL Cluster Lab with Vagrant
 
-This lab provides a fully automated MySQL replication environment using Vagrant and Ubuntu 22.04 VMs. Each node is provisioned with the correct MySQL version, custom configuration, and replication setup. The monitor node is also provisioned for orchestration and management.
+This lab provides a fully automated MySQL replication and ProxySQL cluster environment using Vagrant and Ubuntu 22.04 VMs. Each node is provisioned with the correct MySQL version, custom configuration, and replication setup. The monitor node is also provisioned for orchestration and management. ProxySQL nodes are clustered and pre-configured to route to all MySQL nodes.
 
 ## Features
-- 4 Ubuntu 22.04 VMs: monitor, mysql57, mysql8, mysql84
+- 6 Ubuntu 22.04 VMs: monitor, proxysql1, proxysql2, mysql57, mysql8, mysql84
+- ProxySQL cluster (2 nodes) with config-driven MySQL backend registration
 - Per-VM resource configuration (memory, CPUs)
 - Custom configs for each MySQL node
 - Automatic replication setup (5.7 → 8.0 → 8.4)
@@ -15,7 +16,7 @@ This lab provides a fully automated MySQL replication environment using Vagrant 
 
 1. **Clone this repo and enter the lab directory:**
    ```sh
-   cd gascan_lab_docker
+   cd gascan_lab_vagrant
    ```
 
 2. **Review and adjust VM resources and order (optional):**
@@ -23,9 +24,11 @@ This lab provides a fully automated MySQL replication environment using Vagrant 
    ```ruby
    machines = [
      { name: "monitor", ip: "192.168.56.100", provision: "provision/provision_monitor.sh", memory: 6144, cpus: 4, order: 1 },
-     { name: "mysql57", ip: "192.168.56.157", provision: "provision/provision_mysql57.sh", memory: 1024, cpus: 2, order: 2 },
-     { name: "mysql8", ip: "192.168.56.180", provision: "provision/provision_mysql8.sh", memory: 1024, cpus: 2, order: 3 },
-     { name: "mysql84", ip: "192.168.56.184", provision: "provision/provision_mysql84.sh", memory: 1024, cpus: 2, order: 4 }
+     { name: "proxysql1", ip: "192.168.56.101", provision: "provision/provision_proxysql1.sh", memory: 1024, cpus: 2, order: 2 },
+     { name: "proxysql2", ip: "192.168.56.102", provision: "provision/provision_proxysql2.sh", memory: 1024, cpus: 2, order: 3 },
+     { name: "mysql57", ip: "192.168.56.157", provision: "provision/provision_mysql57.sh", memory: 1024, cpus: 2, order: 4 },
+     { name: "mysql8", ip: "192.168.56.180", provision: "provision/provision_mysql8.sh", memory: 1024, cpus: 2, order: 5 },
+     { name: "mysql84", ip: "192.168.56.184", provision: "provision/provision_mysql84.sh", memory: 1024, cpus: 2, order: 6 }
    ]
    ```
 
@@ -34,33 +37,51 @@ This lab provides a fully automated MySQL replication environment using Vagrant 
    ```sh
    vagrant up --no-parallel
    # or, for strict serial startup:
-   for vm in monitor mysql57 mysql8 mysql84; do vagrant up $vm; done
+   for vm in monitor proxysql1 proxysql2 mysql57 mysql8 mysql84; do vagrant up $vm; done
    ```
 
 4. **Access VMs:**
    ```sh
    vagrant ssh monitor
+   vagrant ssh proxysql1
+   vagrant ssh proxysql2
    vagrant ssh mysql57
    vagrant ssh mysql8
    vagrant ssh mysql84
    ```
 
 5. **VM Networking:**
-   - monitor: 192.168.56.100
-   - mysql57: 192.168.56.157
-   - mysql8:  192.168.56.180
-   - mysql84: 192.168.56.184
+   - monitor:   192.168.56.100
+   - proxysql1: 192.168.56.101
+   - proxysql2: 192.168.56.102
+   - mysql57:   192.168.56.157
+   - mysql8:    192.168.56.180
+   - mysql84:   192.168.56.184
 
 6. **Customizing Provisioning:**
    - Edit scripts in `provision/` to change how each VM is set up.
    - Shared scripts/configs are in `/lab_scripts` inside each VM (from `mysql_replication_setup/`).
+
+## ProxySQL Cluster
+- ProxySQL 3.x is deployed on `proxysql1` and `proxysql2` (IPs above).
+- Both nodes are configured as a cluster and are aware of all MySQL backends.
+- Configuration is provided via `/vagrant/config/proxysql1.cnf` and `/vagrant/config/proxysql2.cnf`.
+- Admin interface is available on port 6032 (localhost only).
+- The `percona` user is created on each ProxySQL node for admin access.
+- After SSHing into a ProxySQL node, switch to the `percona` user for admin tasks:
+  ```sh
+  sudo -i -u percona
+  mysql   # connects to ProxySQL admin interface using .my.cnf
+  ```
+- The `vagrant` user is auto-switched to `percona` on login via `.profile`.
+- Only the `percona` user has a `.my.cnf` for passwordless admin login.
 
 ## Directory Structure
 - `Vagrantfile` — Vagrant configuration for the lab
 - `provision/` — Provisioning scripts for each VM
 - `provision/playbook_monitor.yml` — Ansible playbook for monitor node
 - `provision/mysql_users.sql` — MySQL/replication user setup SQL
-- `config/` — MySQL configuration files
+- `config/` — MySQL and ProxySQL configuration files
 - `High_level_plan.md` — Advanced scenarios, topology ideas, and manual steps
 
 ## How It Works
@@ -68,6 +89,7 @@ This lab provides a fully automated MySQL replication environment using Vagrant 
 - Replication users and monitoring users are created automatically.
 - Replication is set up automatically during provisioning.
 - The monitor node manages SSH keys and can orchestrate the environment.
+- ProxySQL nodes are clustered and pre-configured to route to all MySQL backends.
 - **Environment variables for the `percona` user are set in `.bashrc` by the Ansible playbook. For non-interactive commands, use `sudo -u percona -i <command>` to ensure the environment is loaded.**
 
 ## Monitor Node Provisioning & Secrets
@@ -100,6 +122,13 @@ vagrant destroy   # Destroy all VMs
 
 ## Usage Examples
 
+- Connect to ProxySQL admin interface (as percona user):
+  ```sh
+  vagrant ssh proxysql1
+  # You will be auto-switched to percona user
+  mysql   # connects to ProxySQL admin interface on 127.0.0.1:6032
+  ```
+
 - Connect to MySQL 8.0 node:
   ```sh
   vagrant ssh mysql8
@@ -108,18 +137,18 @@ vagrant destroy   # Destroy all VMs
 
 - Check replication status:
   ```sh
-  mysql -e 'SHOW SLAVE STATUS\\G'
+  mysql -e 'SHOW SLAVE STATUS\G'
   ```
 
 ## Troubleshooting
 - Check provisioning logs in the Vagrant output.
 - For custom scripts/configs, edit files in `mysql_replication_setup/`.
 - If a VM fails to start, check for duplicate IPs or hostnames in the Vagrantfile.
-- If MySQL won't connect, check the config files in `config/` and the logs in `/var/log/mysql/` inside the VM.
+- If MySQL or ProxySQL won't connect, check the config files in `config/` and the logs in `/var/log/mysql/` or `/var/log/proxysql/` inside the VM.
 
 ## Customization Tips
 - To add more VMs, copy and modify an entry in the `machines` array in the Vagrantfile.
-- To change MySQL versions, update the provisioning scripts and config files as needed.
+- To change MySQL or ProxySQL versions, update the provisioning scripts and config files as needed.
 - To customize passwords, move them to environment variables or a config file for better security.
 - Add `.env` to your `.gitignore` to avoid committing secrets.
 
@@ -130,7 +159,7 @@ vagrant destroy   # Destroy all VMs
 | provision/             | All provisioning scripts and configs         |
 | provision/playbook_monitor.yml | Ansible playbook for monitor node      |
 | provision/mysql_users.sql      | MySQL/replication user setup SQL       |
-| config/                | MySQL configuration files                    |
+| config/                | MySQL and ProxySQL configuration files       |
 | High_level_plan.md     | Advanced scenarios and topology ideas        |
 
 ## Environment Variables and Secrets (.env)
