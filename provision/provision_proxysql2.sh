@@ -70,9 +70,7 @@ echo "[proxysql2] Starting ProxySQL with new config..."
 sudo systemctl start proxysql
 
 echo "[proxysql2] Loading ProxySQL config to runtime and saving to disk..."
-# Wait for ProxySQL admin interface to be available
-sleep 5
-mysql -e "\
+sudo -u percona mysql -e "\
 LOAD MYSQL SERVERS FROM CONFIG;\
 LOAD PROXYSQL SERVERS FROM CONFIG;\
 LOAD MYSQL SERVERS TO RUNTIME;\
