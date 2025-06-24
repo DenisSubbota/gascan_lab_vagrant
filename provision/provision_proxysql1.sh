@@ -70,10 +70,7 @@ sudo systemctl start proxysql
 
 echo "[proxysql1] Loading ProxySQL config to runtime and saving to disk..."
 # Wait for ProxySQL admin interface to be available
-until mysqladmin ping -h 127.0.0.1 -P6032 --silent --protocol=tcp; do
-  echo "[proxysql1] Waiting for ProxySQL admin interface..."
-  sleep 2
-done
+sleep 5
 mysql -e "\
 LOAD MYSQL SERVERS FROM CONFIG;\
 LOAD PROXYSQL SERVERS FROM CONFIG;\
