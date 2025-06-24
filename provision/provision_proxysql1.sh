@@ -67,6 +67,7 @@ sudo chmod 600 /home/percona/.my.cnf
 
 echo "[proxysql1] Starting ProxySQL with new config..."
 sudo systemctl start proxysql
+sleep 2
 
 echo "[proxysql1] Loading ProxySQL config to runtime and saving to disk..."
 sudo -u percona mysql -e "\
