@@ -34,16 +34,19 @@ if [ -f /home/vagrant/.bashrc ]; then
     sudo chown percona:percona /home/percona/.bashrc
 fi
 
-echo "[proxysql2] Updating apt cache and installing mysql-client-8.0..."
-sudo apt-get update
-sudo apt-get install -y mysql-client-8.0
+echo "[proxysql2] Updating apt cache..."
+sudo apt-get update -qq > /dev/null 2>&1
 
-echo "[proxysql2] Installing ProxySQL..."
-sudo apt-get install -y wget lsb-release gnupg2
-wget -O- https://repo.proxysql.com/ProxySQL/repo_pub_key | sudo apt-key add -
-echo "deb https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/$(lsb_release -sc)/ ./" | sudo tee /etc/apt/sources.list.d/proxysql.list
-sudo apt-get update
-sudo apt-get install -y proxysql
+echo "[proxysql2] Installing MySQL client (mysql-client-8.0)..."
+sudo apt-get install -y mysql-client-8.0 > /dev/null 2>&1
+
+echo "[proxysql2] Installing ProxySQL and dependencies..."
+sudo apt-get install -y wget lsb-release gnupg2 > /dev/null 2>&1
+wget -O- https://repo.proxysql.com/ProxySQL/repo_pub_key | sudo apt-key add - > /dev/null 2>&1
+
+echo "deb https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/$(lsb_release -sc)/ ./" | sudo tee /etc/apt/sources.list.d/proxysql.list > /dev/null
+sudo apt-get update -qq > /dev/null 2>&1
+sudo apt-get install -y proxysql > /dev/null 2>&1
 
 echo "[proxysql2] ProxySQL installed."
 
