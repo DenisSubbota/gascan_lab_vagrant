@@ -34,8 +34,11 @@ if [ -f /home/vagrant/.bashrc ]; then
     sudo chown percona:percona /home/percona/.bashrc
 fi
 
-echo "[proxysql1] Installing ProxySQL..."
+echo "[proxysql1] Updating apt cache and installing mysql-client-8.0..."
 sudo apt-get update
+sudo apt-get install -y mysql-client-8.0
+
+echo "[proxysql1] Installing ProxySQL..."
 sudo apt-get install -y wget lsb-release gnupg2
 wget -O- https://repo.proxysql.com/ProxySQL/repo_pub_key | sudo apt-key add -
 echo "deb https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/$(lsb_release -sc)/ ./" | sudo tee /etc/apt/sources.list.d/proxysql.list
