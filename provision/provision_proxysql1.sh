@@ -69,7 +69,7 @@ echo "[proxysql1] Starting ProxySQL with new config..."
 sudo systemctl start proxysql
 
 echo "[proxysql1] Loading ProxySQL config to runtime and saving to disk..."
-mysql -u admin -padmin -h 127.0.0.1 -P6032 -e "\
+mysql -e "\
 LOAD MYSQL SERVERS FROM CONFIG;\
 LOAD PROXYSQL SERVERS FROM CONFIG;\
 LOAD MYSQL SERVERS TO RUNTIME;\
