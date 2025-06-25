@@ -1,7 +1,7 @@
 [mysqld]
 # Tuned for low-memory (512MB) environment
 log-bin = mysql-bin
-server-id = 1
+server-id = 57
 binlog_format = ROW 
 # Basic Settings
 read-only = 0
