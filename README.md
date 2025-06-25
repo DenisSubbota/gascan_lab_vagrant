@@ -12,7 +12,7 @@ A Vagrant-based lab for MySQL replication (5.7 → 8.0 → 8.4 → 8.4backup) an
 | mysql57        | 192.168.56.157  | MySQL 5.7 (Source)              |
 | mysql8         | 192.168.56.180  | MySQL 8.0 (Intermediate)        |
 | mysql84        | 192.168.56.184  | MySQL 8.4 (Target)              |
-| mysql84backup  | 192.168.56.255  | MySQL 8.4 (Backup)              |
+| mysql84backup  | 192.168.56.254  | MySQL 8.4 (Backup)              |
 
 ## Quick Start
 1. **Clone and enter the lab:**

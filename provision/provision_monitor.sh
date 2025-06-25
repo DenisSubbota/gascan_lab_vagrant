@@ -90,7 +90,7 @@ cat <<EOF | sudo tee -a /etc/hosts
 192.168.56.157  mysql57
 192.168.56.180  mysql8
 192.168.56.184  mysql84
-192.168.56.255  mysql84backup
+192.168.56.254  mysql84backup
 EOF
 
 echo "[INFO] Monitor provisioning complete."
