@@ -11,8 +11,8 @@ A Vagrant-based lab for MySQL replication (5.7 → 8.0 → 8.4 → 8.4backup) an
 | proxysql2      | 192.168.56.102  | ProxySQL cluster node 2          |
 | mysql57        | 192.168.56.157  | MySQL 5.7 (Source)              |
 | mysql8         | 192.168.56.180  | MySQL 8.0 (Intermediate)        |
-| mysql84        | 192.168.56.184  | MySQL 8.4 (Target)              |
-| mysql84backup  | 192.168.56.254  | MySQL 8.4 (Backup)              |
+| mysql84        | 192.168.56.184  | MySQL 8.4 (Target, main replication endpoint) |
+| mysql84backup  | 192.168.56.254  | MySQL 8.4 (Backup, replicates from mysql84)  |
 
 ## Quick Start
 1. **Clone and enter the lab:**
@@ -37,9 +37,11 @@ A Vagrant-based lab for MySQL replication (5.7 → 8.0 → 8.4 → 8.4backup) an
 ```
 mysql57 (Source) → mysql8 (Intermediate) → mysql84 (Target) → mysql84backup (Backup)
 ```
+- `mysql84` is the main replication target, replicating from `mysql8`.
+- `mysql84backup` replicates from `mysql84` for disaster recovery.
 
 ## ProxySQL Usage
-- Admin interface: `mysql` (as `percona` user, auto-switched on login)
+- Admin interface: `mysql` (as `percona_proxy` user, password: `password`, port 6032, auto-switched on login)
 - Config files: `/vagrant/config/proxysql1.cnf`, `/vagrant/config/proxysql2.cnf`
 - Cluster is pre-configured; MySQL backends are auto-registered
 - All MySQL nodes (including mysql84backup) are configured as readers in hostgroup 11
@@ -76,11 +78,23 @@ vagrant destroy   # Destroy all VMs
 - `Vagrantfile` — VM definitions
 - `provision/` — All provisioning scripts
 - `config/` — MySQL & ProxySQL config files
-- `High_level_plan.md` — Advanced scenarios
 
 ## Customization
 - Add/modify VMs in `Vagrantfile`
 - Edit provisioning scripts in `provision/`
 - Change passwords/secrets in `.env` (never commit real secrets)
 
+# TBD 
+- Instead of using bash provisioning, change to ansible provision 
+- Deploy auto-gacan update binary 
+- pxc 3 instance 8.0 ( replicas  of 57 )
+- Basic setup with PD alerting DMS etc 
+- orchestrator configuration 
+- VIP over db nodes
+- VIP over proxysql node 
+- Backup node  ( Auto configuration )
+- Restore instance
+- Consul DNS 
+- mysql84 should have 2 mysql instance on a host 
+- multi sources replication we can use 8.4 multiple instances for this purpose 8.4 is a replica of 8.4
 ---
