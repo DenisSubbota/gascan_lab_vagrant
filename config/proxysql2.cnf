@@ -67,3 +67,14 @@ mysql_servers =
         max_replication_lag=10
     }
 ) 
+
+mysql_users =
+(
+    {
+        username = "percona"
+        password = "Percona1234"
+        default_hostgroup = 10
+        transaction_persistent = 0
+        active = 1
+    }
+) 
