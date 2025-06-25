@@ -4,6 +4,7 @@ log-bin = mysql-bin
 server-id = 4
 binlog_format = ROW 
 # Basic Settings
+read-only = 1
 user = mysql
 pid-file = /var/run/mysqld/mysqld.pid
 socket = /var/run/mysqld/mysqld.sock
