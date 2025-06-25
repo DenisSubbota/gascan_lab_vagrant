@@ -7,7 +7,8 @@ Vagrant.configure("2") do |config|
     { name: "proxysql2", ip: "192.168.56.102", provision: "provision/provision_proxysql2.sh", memory: 1024, cpus: 2, order: 3 },
     { name: "mysql57", ip: "192.168.56.157", provision: "provision/provision_mysql57.sh", memory: 1024, cpus: 2, order: 4 },
     { name: "mysql8", ip: "192.168.56.180", provision: "provision/provision_mysql8.sh", memory: 1024, cpus: 2, order: 5 },
-    { name: "mysql84", ip: "192.168.56.184", provision: "provision/provision_mysql84.sh", memory: 1024, cpus: 2, order: 6 }
+    { name: "mysql84", ip: "192.168.56.184", provision: "provision/provision_mysql84.sh", memory: 1024, cpus: 2, order: 6 },
+    { name: "mysql84backup", ip: "192.168.56.255", provision: "provision/provision_mysql84backup.sh", memory: 1024, cpus: 2, order: 7 }
   ]
 
   # Sort machines by :order before defining VMs
@@ -31,5 +32,5 @@ end
 # To enforce serial bring-up, run:
 #   vagrant up --no-parallel
 # Or use the following helper command in your shell:
-#   for vm in monitor mysql57 mysql8 mysql84; do vagrant up $vm; done
+#   for vm in monitor proxysql1 proxysql2 mysql57 mysql8 mysql84 mysql84backup; do vagrant up $vm; done
 # This will bring up each VM in the order specified in the machines array. 

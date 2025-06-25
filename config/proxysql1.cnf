@@ -49,5 +49,11 @@ mysql_servers =
         port=3306
         hostgroup=11
         comment="mysql84"
+    },
+    {
+        address="192.168.56.255"
+        port=3306
+        hostgroup=11
+        comment="mysql84backup"
     }
 ) 
