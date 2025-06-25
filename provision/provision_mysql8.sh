@@ -76,7 +76,7 @@ echo "[INFO] Creating replication and monitoring users..."
 sudo mysql < /vagrant/provision/mysql_users.sql
 
 echo "[INFO] Setting up replication from mysql57 (source)..."
-sudo mysql -e "STOP SLAVE; RESET SLAVE ALL; CHANGE MASTER TO MASTER_HOST='192.168.56.157', MASTER_PORT=3306, MASTER_USER='repl_user', MASTER_PASSWORD='repl_password', MASTER_AUTO_POSITION=1; START SLAVE;"
+sudo mysql -e "STOP SLAVE; RESET SLAVE ALL; CHANGE MASTER TO MASTER_HOST='192.168.56.157', MASTER_PORT=3306, MASTER_USER='percona', MASTER_PASSWORD='Percona1234', MASTER_AUTO_POSITION=1; START SLAVE;"
 
 echo "[INFO] MySQL slave status:"
 sudo mysql -e "SHOW SLAVE STATUS\\G"

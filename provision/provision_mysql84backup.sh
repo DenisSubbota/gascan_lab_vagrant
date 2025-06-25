@@ -79,7 +79,7 @@ echo "[INFO] Creating monitoring user..."
 sudo mysql < /vagrant/provision/mysql_users.sql
 
 echo "[INFO] Setting up replication from mysql84 (backup)..."
-sudo mysql -e "STOP REPLICA; RESET REPLICA ALL; CHANGE REPLICATION SOURCE TO SOURCE_HOST='192.168.56.184', SOURCE_PORT=3306, SOURCE_USER='repl_user', SOURCE_PASSWORD='repl_password', SOURCE_AUTO_POSITION=1; START REPLICA;"
+sudo mysql -e "STOP REPLICA; RESET REPLICA ALL; CHANGE REPLICATION SOURCE TO SOURCE_HOST='192.168.56.184', SOURCE_PORT=3306, SOURCE_USER='percona', SOURCE_PASSWORD='Percona1234', SOURCE_AUTO_POSITION=1; START REPLICA;"
 
 echo "[INFO] MySQL replica status:"
 sudo mysql -e "SHOW REPLICA STATUS\\G"
