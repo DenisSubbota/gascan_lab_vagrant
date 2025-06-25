@@ -83,4 +83,14 @@ echo "[INFO] Copying .vagrant_profile to vagrant user's .profile..."
 sudo cp /vagrant/provision/.vagrant_profile /home/vagrant/.profile
 sudo chown vagrant:vagrant /home/vagrant/.profile
 
+echo "[INFO] Adding DB and ProxySQL host entries to /etc/hosts..."
+cat <<EOF | sudo tee -a /etc/hosts
+192.168.56.101  proxysql1
+192.168.56.102  proxysql2
+192.168.56.157  mysql57
+192.168.56.180  mysql8
+192.168.56.184  mysql84
+192.168.56.255  mysql84backup
+EOF
+
 echo "[INFO] Monitor provisioning complete."

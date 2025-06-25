@@ -1,5 +1,11 @@
 datadir="/var/lib/proxysql"
 
+mysql_variables=
+{
+    monitor_username="percona"
+    monitor_password="Percona1234"
+}
+
 admin_variables=
 {
     admin_credentials="admin:admin;percona:password"
