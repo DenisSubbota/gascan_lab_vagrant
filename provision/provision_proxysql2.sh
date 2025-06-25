@@ -60,7 +60,7 @@ sudo chown proxysql:proxysql /etc/proxysql.cnf
 echo "[proxysql2] Creating .my.cnf for percona user..."
 cat <<EOF | sudo tee /home/percona/.my.cnf > /dev/null
 [client]
-user=percona
+user=percona_proxy
 password=password
 host=127.0.0.1
 port=6032

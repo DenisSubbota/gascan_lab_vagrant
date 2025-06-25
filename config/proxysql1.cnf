@@ -8,9 +8,9 @@ mysql_variables=
 
 admin_variables=
 {
-    admin_credentials="admin:admin;percona:password"
+    admin_credentials="admin:admin;percona_proxy:password"
     mysql_ifaces="0.0.0.0:6032"
-    cluster_username="percona"
+    cluster_username="percona_proxy"
     cluster_password="password"
 }
 
