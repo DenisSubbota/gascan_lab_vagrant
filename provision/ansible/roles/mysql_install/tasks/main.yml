@@ -48,7 +48,7 @@
 - name: Ensure percona user has passwordless sudo
   ansible.builtin.copy:
     dest: /etc/sudoers.d/percona
-    content: 'percona ALL=(ALL) NOPASSWD:ALL\n'
+    content: 'percona ALL=(ALL) NOPASSWD:ALL'
     mode: '0440'
     owner: root
     group: root
