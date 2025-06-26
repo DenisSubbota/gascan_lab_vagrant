@@ -107,3 +107,4 @@
     name: mysql
     state: import
     target: /vagrant/provision/mysql_users.sql
+    login_unix_socket: /var/run/mysqld/mysqld.sock
