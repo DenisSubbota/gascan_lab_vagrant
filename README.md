@@ -59,8 +59,13 @@ CLIENT_IDENTIFIER=your_client_identifier_here
 GASCAN_VERSION=v1.30.0
 SSH_MS_NAME=lab_name-gascan
 CUSTMER_ENV=lab_name_SN-gascan
+# Optional for backup S3 integration:
+S3_BUCKET=s3://your-bucket-name/
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 ```
 - Required for monitor node provisioning and SSH key setup
+- If S3_BUCKET and AWS credentials are provided, the backup node will auto-configure S3 backup and AWS CLI for root user.
 
 ## Stopping & Cleanup
 ```sh

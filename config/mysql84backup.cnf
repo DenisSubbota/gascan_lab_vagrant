@@ -68,9 +68,3 @@ general_log_file = /var/log/mysql/general.log
 # Report Settings
 report_host = 192.168.56.254
 report_port = 3306
-
-[mysql]
-default-character-set = utf8mb4
-
-[client]
-default-character-set = utf8mb4 
