@@ -48,12 +48,21 @@ ALL_SERVERS:
 
 
 # -- AWS S3 --
+  {% if aws_s3_enabled|default(false) %}
+  S3_BUCKET: {{ s3_bucket }}
+  RSYNC_PATH: /path
+  ENCRYPT: YES
+  ENCRYPT_USING_TMPDIR: NO
+  UPLOAD_INTERVAL: daily
+  S3_TOOL: awscli           # s3cmd | awscli 
+  {% else %}
   S3_BUCKET: s3://<s3-bucket-name-for-percona>/ # Uncomment UPLOAD in SERVER_LIST if required.
   RSYNC_PATH: /path
   ENCRYPT: YES
   ENCRYPT_USING_TMPDIR: NO
   UPLOAD_INTERVAL: daily
   S3_TOOL: awscli           # s3cmd | awscli 
+  {% endif %}
 #  SKIP_S3_SAFETY_CHECK: False
 #  S3_STORAGE_CLASS: STANDARD # S3 storage class used to upload
 #  S3_LIMIT_RATE: # Amount may be expressed in bytes or with k|m suffix
@@ -72,21 +81,21 @@ CRON_ENTRIES:
 # Almost any global option from ALL_SERVERS can be overridden by an individual host.
 SERVER_LIST:
 - BACKUP_TYPE: B
-  ALIAS: mysql8
-  HOST: 192.168.56.180
-  #UPLOAD: S3       # S3 | rsync | GS | AZ
+  ALIAS: {{ replication_source_alias }}
+  HOST: {{ replication_source_host }}
+  {% if aws_s3_enabled|default(false) %}UPLOAD: S3{% else %}#UPLOAD: S3{% endif %}       # S3 | rsync | GS | AZ
 
 - BACKUP_TYPE: M
-  ALIAS: backup_database
+  ALIAS: {{ inventory_hostname }}
   HOST: 127.0.0.1
-  #UPLOAD: S3       # S3 | rsync | GS | AZ
+  {% if aws_s3_enabled|default(false) %}UPLOAD: S3{% else %}#UPLOAD: S3{% endif %}       # S3 | rsync | GS | AZ
   COMPRESS: NO  # Disabling built-in backup-driver compression. Keep it, if `--compress=ZSTD` flag present.
 
 - BACKUP_TYPE: X
-  ALIAS: backup_database
+  ALIAS: {{ inventory_hostname }}
   HOST: localhost
   COMPRESSION_ALGORITHM: zstd                       # Use this for Percona XtraBackup 8.0.34-29 and later
   ENCRYPT: NO
-  #UPLOAD: S3     # S3 | rsync | GS | AZ
+  {% if aws_s3_enabled|default(false) %}UPLOAD: S3{% else %}#UPLOAD: S3{% endif %}     # S3 | rsync | GS | AZ
 
 </rewritten_file> 
