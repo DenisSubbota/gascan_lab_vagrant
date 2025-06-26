@@ -1,0 +1,3 @@
+restore_dir: /var/log/percona/restore/
+allow_restore: true
+restore_cron_enabled: false 

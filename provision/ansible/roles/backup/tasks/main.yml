@@ -1,3 +1,138 @@
 ---
 # tasks file for backup
+# This role is for backup nodes, which are also in their MySQL version group (e.g., [mysql8], [mysql84])
 # TODO: Implement backup node provisioning tasks 
+
+- name: Ensure required packages for backup are installed
+  ansible.builtin.apt:
+    name:
+      - gnupg2
+      - wget
+      - lsb-release
+      - awscli
+      - s3cmd
+    state: present
+    update_cache: true
+
+- name: Enable Percona xtrabackup 8.0 repo (pxb-80) for MySQL 8.0
+  ansible.builtin.command: percona-release enable pxb-80 release
+  args:
+    creates: /etc/apt/sources.list.d/percona-pxb-80-release.list
+  when: "'mysql8' in group_names"
+
+- name: Enable Percona xtrabackup 8.4 repo (pxb-84-lts) for MySQL 8.4
+  ansible.builtin.command: percona-release enable pxb-84-lts
+  args:
+    creates: /etc/apt/sources.list.d/percona-pxb-84-lts.list
+  when: "'mysql84' in group_names"
+
+- name: Update apt cache after enabling pxb repo
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install xtrabackup for MySQL 8.0
+  ansible.builtin.apt:
+    name: percona-xtrabackup-80
+    state: present
+  when: "'mysql8' in group_names"
+
+- name: Install xtrabackup for MySQL 8.4
+  ansible.builtin.apt:
+    name: percona-xtrabackup-84
+    state: present
+  when: "'mysql84' in group_names"
+
+- name: Install mydumper (universal for both versions)
+  ansible.builtin.apt:
+    name: mydumper
+    state: present
+    update_cache: true
+
+- name: Create backup directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: percona
+    group: percona
+    mode: '0755'
+  loop:
+    - /home/percona/bin
+    - /home/percona/.config/percona/backup/
+    - /var/log/percona/backups/
+    - /root/.config/percona/backup
+
+- name: Copy backup config for MySQL 8.0
+  ansible.builtin.copy:
+    src: ../../../../config/backup_config8.yml
+    dest: /home/percona/.config/percona/backup/backup_config.yml
+    owner: percona
+    group: percona
+    mode: '0644'
+  when: "'mysql8' in group_names"
+
+- name: Copy backup config for MySQL 8.4
+  ansible.builtin.copy:
+    src: ../../../../config/backup84_config.yml
+    dest: /home/percona/.config/percona/backup/backup_config.yml
+    owner: percona
+    group: percona
+    mode: '0644'
+  when: "'mysql84' in group_names"
+
+- name: Ensure .my.cnf for percona user
+  ansible.builtin.copy:
+    dest: /home/percona/.my.cnf
+    content: |
+      [client]
+      user=percona
+      password=Percona1234
+    owner: percona
+    group: percona
+    mode: '0600'
+
+- name: Ensure .my.cnf for root user
+  ansible.builtin.copy:
+    dest: /root/.my.cnf
+    content: |
+      [client]
+      user=percona
+      password=Percona1234
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Create static xb_keyfile for xtrabackup encryption
+  ansible.builtin.copy:
+    dest: /home/percona/.config/percona/backup/xb_keyfile
+    content: "000000000000000000000000"
+    owner: percona
+    group: percona
+    mode: '0600'
+
+- name: Create dir_encrypt.yml for directory encryption
+  ansible.builtin.copy:
+    dest: /root/.config/percona/backup/dir_encrypt.yml
+    content: |
+      'encryption recipient': 'directory.encryption@percona.com'
+      'encryption home dir': '/root/.gnupg'
+      'max encryption processes': 5
+      'encryption nice': False
+      'gpg bin': '/usr/bin/gpg'
+      'encryption file filter': ''
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Ensure backup cron job is present if enabled
+  ansible.builtin.cron:
+    name: "percona-backup cron job"
+    user: root
+    minute: "*"
+    job: >-
+      PERCONA_BACKUP_TEXTFILE_COLLECTOR_DIR='/home/percona/pmm/collectors/textfile-collector/low-resolution/' \
+      PEX_SCRIPT=backup_driver.py /home/percona/bin/percona-backup \
+      --config /home/percona/.config/percona/backup/backup_config.yml -l /tmp/backup_driver.lock
+  when: backup_cron_enabled | default(false)
+
+# Optionally, add S3 and AWS CLI configuration here if enable_s3 is true
+# (You can extend this with Ansible's lineinfile/template modules as needed) 

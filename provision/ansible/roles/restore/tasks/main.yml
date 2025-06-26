@@ -1,3 +1,4 @@
 ---
 # tasks file for restore
+# This role is for restore nodes, which are also in their MySQL version group (e.g., [mysql8], [mysql84])
 # TODO: Implement restore node provisioning tasks 

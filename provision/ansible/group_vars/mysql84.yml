@@ -1,4 +1,3 @@
 mysql_percona_repo: ps-84-lts
 mysql_server_package: percona-server-server
-mysql_config_file: mysql84.cnf
-mysql_prompt: mysql84> 
+mysql_config_file: mysql84.cnf 

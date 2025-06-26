@@ -1,25 +1,44 @@
 ---
-- hosts: mysql
+- name: Provision all MySQL nodes
+  hosts: mysql
   become: true
   roles:
     - mysql_install
 
-- hosts: backup
+- name: Provision all backup nodes
+  hosts: backup
   become: true
   roles:
     - backup
 
-- hosts: restore
+- name: Provision all restore nodes
+  hosts: restore
   become: true
   roles:
     - restore
 
-- hosts: proxysql
+- name: Provision all ProxySQL nodes
+  hosts: proxysql
   become: true
   roles:
     - proxysql
 
-- hosts: monitor
+- name: Provision all monitor nodes
+  hosts: monitor
   become: true
   roles:
-    - monitor 
+    - monitor
+
+- name: Configure replication on mysql8
+  hosts: mysql8
+  become: true
+  roles:
+    - mysql_install
+    - replication
+
+- name: Configure replication on mysql84
+  hosts: mysql84
+  become: true
+  roles:
+    - mysql_install
+    - replication 

@@ -1,6 +1,6 @@
 ---
 # tasks file for mysql_install
-# TODO: Implement MySQL installation and configuration tasks
+# TODO: Implement MySQL installation and configuration tasks 
 
 - name: Ensure required apt packages are installed
   ansible.builtin.apt:

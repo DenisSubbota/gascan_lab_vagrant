@@ -1,0 +1,3 @@
+backup_dir: /var/log/percona/backups/
+enable_s3: true
+backup_cron_enabled: true 

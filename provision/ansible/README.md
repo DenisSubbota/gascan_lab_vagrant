@@ -17,7 +17,9 @@ This directory contains a fully role-based Ansible provisioning system for the l
 2. Edit the inventory file as needed.
 3. Run the playbook:
    ```sh
-   ansible-playbook -i inventory/lab site.yml
+   cd /vagrant/provi
+   sudo ansible-playbook -i inventory/lab site.yml --limit mysql57 -u percona --private-key=/home/percona/.ssh/id_rsa
+  
    ```
 
 ## Notes

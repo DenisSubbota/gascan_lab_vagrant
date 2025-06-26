@@ -1,0 +1,28 @@
+---
+# tasks file for replication
+
+- name: Stop replication if running
+  community.mysql.mysql_replication:
+    mode: stop
+    login_user: percona
+    login_password: Percona1234
+  ignore_errors: true
+  when: replication_source_host is defined
+
+- name: Configure replication (CHANGE MASTER/REPLICA TO)
+  community.mysql.mysql_replication:
+    mode: changemaster
+    master_host: "{{ replication_source_host }}"
+    master_user: percona
+    master_password: Percona1234
+    master_auto_position: true
+    login_user: percona
+    login_password: Percona1234
+  when: replication_source_host is defined
+
+- name: Start replication
+  community.mysql.mysql_replication:
+    mode: start
+    login_user: percona
+    login_password: Percona1234
+  when: replication_source_host is defined 
