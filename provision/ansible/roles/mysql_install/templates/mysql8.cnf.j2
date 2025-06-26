@@ -19,7 +19,6 @@ character-set-server = utf8mb4
 collation-server = utf8mb4_unicode_ci
 
 # Replication Settings (Intermediate - both source and slave)
-server-id = {{ mysql_server_id | default(2) }}
 log-bin = mysql-bin
 binlog_format = ROW
 binlog_row_image = FULL
