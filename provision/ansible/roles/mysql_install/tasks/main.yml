@@ -53,10 +53,6 @@
     owner: root
     group: root
 
-- name: Set percona user password
-  ansible.builtin.user:
-    name: percona
-    password: "{{ 'percona' | password_hash('sha512') }}"
 
 - name: Copy .vagrant_profile to vagrant user
   ansible.builtin.copy:
