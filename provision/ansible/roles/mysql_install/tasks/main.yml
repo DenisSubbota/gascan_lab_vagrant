@@ -105,7 +105,7 @@
   community.mysql.mysql_db:
     name: mysql
     state: import
-    target: /vagrant/provision/provision/mysql_users.sql
+    target: /vagrant/provision/mysql_users.sql
     login_user: root
     login_password: ''
   failed_when: false 
