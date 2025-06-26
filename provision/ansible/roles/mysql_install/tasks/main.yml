@@ -108,4 +108,3 @@
     target: /vagrant/provision/mysql_users.sql
     login_user: root
     login_password: ''
-  failed_when: false 
