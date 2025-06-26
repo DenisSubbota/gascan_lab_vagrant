@@ -189,7 +189,7 @@
 
 - name: Parse .env variables
   set_fact:
-    env_vars: "{{ dict(env_content['content'] | b64decode | split('\n') | select('match', '^[A-Z_]+=') | map('split', '=', 1) | map('map', 'trim') | list) }}"
+    env_vars: "{{ dict(env_content['content'] | b64decode | splitlines | select('match', '^[A-Z_]+=') | map('split', '=', 1) | map('map', 'trim') | list) }}"
   when: env_file.stat.exists
 
 - name: Set S3/AWS config variables if .env present
