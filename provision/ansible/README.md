@@ -1,5 +1,6 @@
 # Ansible Provisioning for MySQL/ProxySQL Lab
 
+
 This directory contains a fully role-based Ansible provisioning system for the lab. It is designed to be run from the monitor node and can provision all nodes (MySQL, backup, restore, ProxySQL, monitor) using a single playbook and reusable roles.
 
 ## Structure

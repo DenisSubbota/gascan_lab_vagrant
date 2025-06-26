@@ -1,0 +1,108 @@
+ALL_SERVERS:
+  LOGGING_DIR: /var/log/percona/backups
+  PORT: 3336
+  SSH_USER: root # ( default: percona ) 
+  S3_TOOL: awscli # s3cmd (default) | awscli
+  GPG_PASSWORD_FILE: /root/.gpg_passphrase
+
+SERVER_LIST:
+- ALIAS: restore_xb
+  BACKUP_TYPE: X
+  BACKUP_SOURCE: 192.168.88.10:/backup/xtrabackup/backup-gascan/latest
+  SKIP_INCREMENTALS: SKIP_INCREMENTALS
+  DATADIR: /data/mysql/data/
+  KILL_MYSQL: yes
+  XB_PREPARE_MEMORY: 5000M
+  XB_PARALLEL: 4
+  XTRABACKUP_BIN_CMD: xtrabackup  #  innobackupex (default) | xtrabackup | mariadb-backup
+#  RESTORE_MYCNF: no # Restore mysqld conf files from backup directory ( Defatult: no)
+#  INCREMENTAL_DEST_PATH: /tmp/xb/incrementas # Custom incremental backup dir 
+#  XTRABACKUP_RESTORE_ARGS: 
+#  KEYRING_FILE_DATA: 
+#  XTRABACKUP_AES256_KEYFILE: /home/percona/.config/percona/backup/xb_keyfile
+
+- ALIAS: restore_binlogs_s3
+  BACKUP_TYPE: B
+  DEST_HOST: localhost
+  BACKUP_SOURCE: s3://<bucket_name>/binlogs/primary
+  START_FILE: binlog.000030  # Leave commented STOP_FILE if you want to apply all binarylogs available in source from START_FILE onward
+  START_POSITION: 157
+  # STOP_FILE: binlog.000031 
+  # STOP_POSITION: 2995 
+  # USE_SQL_FILE: 
+  
+- ALIAS: restore_binlogs_ssh
+  BACKUP_TYPE: B
+  DEST_HOST: localhost
+  BACKUP_SOURCE: 192.168.88.10:/backup/binlogs/primary
+  START_FILE: binlog.000030  # Leave commented STOP_FILE if you want to apply all binarylogs available in source from START_FILE onward
+  START_POSITION: 157
+  # STOP_FILE: binlog.000031 
+  # STOP_POSITION: 2995 
+  # USE_SQL_FILE:
+
+- ALIAS: restore_xb_s3
+  BACKUP_TYPE: X
+  BACKUP_SOURCE: s3://<bucket_name>/xtrabackup/backup-gascan/latest
+  SKIP_INCREMENTALS: SKIP_INCREMENTALS
+  DATADIR: /data/mysql/data/
+  KILL_MYSQL: yes
+  XB_PREPARE_MEMORY: 5000M
+  XB_PARALLEL: 4
+  XTRABACKUP_BIN_CMD: xtrabackup  #  innobackupex (default) | xtrabackup | mariadb-backup
+  SLAVE_FROM_MASTER: no  # Configuring replication using 
+  WAIT_FOR_CATCHUP: no
+  MASTER_IP: 192.168.88.1
+  MASTER_PORT: 3306
+  MASTER_USER: repl
+  MASTER_PASSWORD: *****
+#  RESTORE_MYCNF: no # Restore mysqld conf files from backup directory ( Defatult: no)
+#  INCREMENTAL_DEST_PATH: /tmp/xb/incrementas # Custom incremental backup dir 
+#  XTRABACKUP_RESTORE_ARGS: 
+#  KEYRING_FILE_DATA: 
+#  XTRABACKUP_AES256_KEYFILE: /home/percona/.config/percona/backup/xb_keyfile
+#  PRE_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
+#  POST_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
+
+- ALIAS: restore_mydumper
+  BACKUP_TYPE: M
+  DEST_HOST: localhost
+  SKIP_DATABASES: mysql,sys,information_schema,performance_schema
+  MYLOADER_THREADS: 4
+  DEST_PORT: 3306
+  BACKUP_SOURCE: 192.168.88.10:/backup/mydumper/backup-gascan/latest
+  LOCAL_PATH: /tmp
+  OVERWRITE_TABLES: yes
+#  MYLOADER_EXTRA_ARGS: --serialized-table-creation # extra args to add to myloader
+#  DATABASE: # --database myloader option (database to restore to)
+#  SKIP_DATABASES:
+#  INCLUDE_DATABASES:
+#  PRE_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
+#  POST_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
+
+- ALIAS: restore_mydumper_s3
+  BACKUP_TYPE: M
+  DEST_HOST: localhost
+  SKIP_DATABASES: mysql,sys,information_schema,performance_schema
+  MYLOADER_THREADS: 4
+  DEST_PORT: 3306
+  BACKUP_SOURCE: s3://<bucket_name>/mydumper/backup-gascan/latest
+  LOCAL_PATH: /tmp
+  OVERWRITE_TABLES: yes
+  MYLOADER_EXTRA_ARGS: --defaults-file=/root/.my.cnf # --serialized-table-creation extra args to add to myloader
+#  DATABASE: # --database myloader option (database to restore to)
+#  SKIP_DATABASES:
+#  INCLUDE_DATABASES:
+#  PRE_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
+#  POST_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
+
+- ALIAS: restore_mydumper_single_table
+  DEST_HOST: localhost
+  SKIP_DATABASES: "*"
+  INCLUDE_DATABASES: database1,metadata
+  MYLOADER_EXTRA_ARGS: --source-db=database1 --regex=^database1\.table1 --database=database1 --serialized-table-creation --defaults-file=/root/.my.cnf
+  DEST_PORT: 3306
+  BACKUP_TYPE: M
+  BACKUP_SOURCE: 192.168.88.10:/backup/mydumper/backup-gascan/latest
+  LOCAL_PATH: /tmp
+  OVERWRITE_TABLES: yes 

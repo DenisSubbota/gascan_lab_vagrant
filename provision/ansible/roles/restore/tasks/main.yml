@@ -2,3 +2,11 @@
 # tasks file for restore
 # This role is for restore nodes, which are also in their MySQL version group (e.g., [mysql8], [mysql84])
 # TODO: Implement restore node provisioning tasks 
+- name: Copy backup driver restore config for MySQL 8.0 restore nodes
+  ansible.builtin.copy:
+    src: ../../../../config/backup_driver_restore8.yml
+    dest: /home/percona/.config/percona/backup/backup_driver_restore8.yml
+    owner: percona
+    group: percona
+    mode: '0644'
+  when: ('mysql8' in group_names) 
