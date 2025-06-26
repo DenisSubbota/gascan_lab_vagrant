@@ -219,7 +219,7 @@
 
 - name: Render backup config for MySQL 8.0
   ansible.builtin.template:
-    src: /vagrant/provision/ansible/config/backup_config8.yml.j2
+    src: config/backup_config8.yml.j2
     dest: /home/percona/.config/percona/backup/backup_config.yml
     owner: percona
     group: percona
@@ -228,7 +228,7 @@
 
 - name: Render backup config for MySQL 8.4
   ansible.builtin.template:
-    src: /vagrant/provision/ansible/config/backup84_config.yml.j2
+    src: config/backup84_config.yml.j2
     dest: /home/percona/.config/percona/backup/backup_config.yml
     owner: percona
     group: percona
