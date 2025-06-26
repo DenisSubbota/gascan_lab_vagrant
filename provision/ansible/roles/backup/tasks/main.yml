@@ -116,7 +116,7 @@
 - name: Ensure GPG passphrase file for root
   ansible.builtin.copy:
     dest: /root/.gpg_passphrase
-    content: "password\n"
+    content: "password"
     owner: root
     group: root
     mode: '0600'
@@ -167,12 +167,12 @@
 
 - name: Check if .env file exists
   ansible.builtin.stat:
-    path: ../../../../config/.env
+    path: /vagrant/config/.env
   register: env_file
 
 - name: Slurp .env file if present
   ansible.builtin.slurp:
-    src: ../../../../config/.env
+    src: /vagrant/config/.env
   register: env_content
   when: env_file.stat.exists
 
@@ -205,7 +205,7 @@
 
 - name: Render backup config for MySQL 8.0
   ansible.builtin.template:
-    src: ../../../../ansible/config/backup_config8.yml.j2
+    src: /vagrant/provision/ansible/config/backup_config8.yml.j2
     dest: /home/percona/.config/percona/backup/backup_config.yml
     owner: percona
     group: percona
@@ -214,7 +214,7 @@
 
 - name: Render backup config for MySQL 8.4
   ansible.builtin.template:
-    src: ../../../../ansible/config/backup84_config.yml.j2
+    src: /vagrant/provision/ansible/config/backup84_config.yml.j2
     dest: /home/percona/.config/percona/backup/backup_config.yml
     owner: percona
     group: percona
