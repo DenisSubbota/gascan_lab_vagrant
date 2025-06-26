@@ -83,7 +83,7 @@
 
 - name: Copy custom MySQL config
   ansible.builtin.copy:
-    src: "/vagrant/provision/config/{{ mysql_config_file }}"
+    src: "/vagrant//config/{{ mysql_config_file }}"
     dest: /etc/mysql/my.cnf
     owner: mysql
     group: mysql
