@@ -211,9 +211,11 @@
 
 - name: Find alias for replication_source_host
   set_fact:
-    replication_source_alias: >-
-      {{ groups['all'] | select('extract', hostvars, ['ansible_host']) | select('equalto', replication_source_host) | list | first | default('unknown') }}
-  when: replication_source_host is defined
+    replication_source_alias: "{{ item }}"
+  when:
+    - replication_source_host is defined
+    - hostvars[item].ansible_host == replication_source_host
+  loop: "{{ groups['all'] }}"
 
 - name: Render backup config for MySQL 8.0
   ansible.builtin.template:
