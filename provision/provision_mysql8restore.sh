@@ -172,12 +172,14 @@ sudo bash -c "cat > /root/.config/percona/backup/dir_encrypt.yml <<EOF
 'encryption file filter': ''
 EOF"
 
-# Set up SSH access from restore to backup as root
-if [ -f /vagrant/provision/mysql8backup_root_id_rsa.pub ]; then
+
+# Generate SSH keypair for root if not present and export public key for backup node
+if [ ! -f /root/.ssh/id_rsa ]; then
   sudo mkdir -p /root/.ssh
-  cat /vagrant/provision/mysql8backup_root_id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys > /dev/null
+  sudo ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
   sudo chmod 700 /root/.ssh
-  sudo chmod 600 /root/.ssh/authorized_keys
+  sudo chmod 600 /root/.ssh/id_rsa
 fi
+sudo cat /root/.ssh/id_rsa.pub > /vagrant/provision/mysql8restore_root_id_rsa.pub
 
 echo "[INFO] mysql8restore provisioning complete." 

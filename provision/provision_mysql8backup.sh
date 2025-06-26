@@ -194,13 +194,12 @@ EOF"
 sudo gpg --export -a directory.encryption@percona.com > /vagrant/provision/gpg_root_directory_encryption_pub_mysql8backup.asc
 sudo gpg --export-secret-keys -a directory.encryption@percona.com > /vagrant/provision/gpg_root_directory_encryption_priv_mysql8backup.asc
 
-# Generate SSH keypair for root if not present and export public key for restore node
-if [ ! -f /root/.ssh/id_rsa ]; then
+# Set up SSH access from restore to backup as root
+if [ -f /vagrant/provision/mysql8restore_root_id_rsa.pub ]; then
   sudo mkdir -p /root/.ssh
-  sudo ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
+  cat /vagrant/provision/mysql8restore_root_id_rsa.pub | sudo tee -a /root/.ssh/authorized_keys > /dev/null
   sudo chmod 700 /root/.ssh
-  sudo chmod 600 /root/.ssh/id_rsa
+  sudo chmod 600 /root/.ssh/authorized_keys
 fi
-sudo cat /root/.ssh/id_rsa.pub > /vagrant/provision/mysql8backup_root_id_rsa.pub
 
 echo "[INFO] mysql8backup provisioning complete." 
