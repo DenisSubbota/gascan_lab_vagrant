@@ -1,0 +1,90 @@
+ALL_SERVERS:
+  LOGGING_DIR: /var/log/percona/backups/
+  BACKUP_DIR: /backup
+  PORT: 3306
+  HARDLINK: YES
+  COMPRESS: YES
+  CHECK_DISK_SPACE: YES
+  POST_RUN_ENCRYPT: NO  # Set this option if you want to encrypt w/o upload. This disables hardlinking.
+  ONLY_IF_RUNNING_SLAVE: YES
+  ONLY_IF_READ_ONLY: YES
+  DEBUG: NO
+
+# ---===================== Binlog options =====================---
+  BINLOG_PREFIX: mysql-bin
+  BINLOG_PURGE_DAYS: 30
+  BINLOG_INSECURE_CONNECTION: YES
+  BINLOG_CMD: /usr/bin/mysqlbinlog
+#  BINLOG_EXTRA_ARGS: --defaults-file=/root/.my_binlog.cnf --ssl-mode=disabled
+#  BINLOG_COMPRESS_CMD: '/usr/bin/pigz -p 3' # command must be installed
+#  BINLOG_DISK_FREE_PCT: 5 #( By default it needs to have 5% free disk space to have binlog backup running)
+
+# ---===================== Mydumper options =====================---
+  MYDUMPER_DAILY_PURGE: 7
+  MYDUMPER_WEEKLY_PURGE: 4
+  MYDUMPER_SCHEMAS: YES
+  MYDUMPER_DUMP_TRIGGERS: YES
+  MYDUMPER_DESYNC_PXC: NO
+  MYDUMPER_LESS_LOCKING: NO
+  MYDUMPER_USE_NUMA: NO
+  MYDUMPER_EXTRA_ARGS: --success-on-1146 --threads=4 --rows=600000 --compress=ZSTD  --defaults-file=/root/.my.cnf --sync-thread-lock-mode=LOCK_ALL --regex="^(?!(mysql|performance_schema|information_schema|sys))"
+#  USE_FTWRL_GUARDIAN: YES
+#  MYDUMPER_UPDATED_SINCE: 2
+
+# ---===================== Xtrabackup options =====================---
+  XTRABACKUP_COPIES: 2
+  XTRABACKUP_KILL_QUERIES: YES
+  XTRABACKUP_KILL_QUERIES_TIMEOUT: 10
+  XTRABACKUP_KILL_QUERY_TYPE: select  # select | all
+  XTRABACKUP_RLIMIT: [65536, 65536]
+  XTRABACKUP_VERIFY: NO
+  XTRABACKUP_PREPARE: NO
+  XTRABACKUP_PREPARE_MEMORY: 2G
+  XTRABACKUP_DESYNC_PXC: NO
+  XTRABACKUP_SLAVE_INFO: YES
+  XTRABACKUP_AES256_KEYFILE: /home/percona/.config/percona/backup/xb_keyfile   # Built-in encryption enabled [add to X : ENCRYPT: no]
+  XTRABACKUP_EXTRA_ARGS: --compress-threads=2 
+  XTRABACKUP_BIN_CMD: xtrabackup                    # innobackupex | xtrabackup | mariadb-backup
+
+
+# -- AWS S3 --
+  S3_BUCKET: s3://<s3-bucket-name-for-percona>/ # Uncomment UPLOAD in SERVER_LIST if required.
+  RSYNC_PATH: /path
+  ENCRYPT: YES
+  ENCRYPT_USING_TMPDIR: NO
+  UPLOAD_INTERVAL: daily
+  S3_TOOL: awscli           # s3cmd | awscli 
+#  SKIP_S3_SAFETY_CHECK: False
+#  S3_STORAGE_CLASS: STANDARD # S3 storage class used to upload
+#  S3_LIMIT_RATE: # Amount may be expressed in bytes or with k|m suffix
+# IMPORTANT even if awscli is chosen, we need to install the s3cmd tool. Otherwise, it will fail due to safety check ¯\(ツ)/¯
+
+# ---===================== Backup driver cron =====================---
+# Monday-Sunday range is 1-7.
+# Please remember quoting expressions containing * such as '*', '*/5'
+CRON_ENTRIES:
+- HOUR: 0
+  MINUTE: 15
+  DAY: '*'
+  BACKUP_TYPE: X,M
+
+# ---===================== Backup jobs =====================---
+# Almost any global option from ALL_SERVERS can be overridden by an individual host.
+SERVER_LIST:
+- BACKUP_TYPE: B
+  ALIAS: mysql8
+  HOST: 192.168.56.180
+  #UPLOAD: S3       # S3 | rsync | GS | AZ
+
+- BACKUP_TYPE: M
+  ALIAS: backup_database
+  HOST: 127.0.0.1
+  #UPLOAD: S3       # S3 | rsync | GS | AZ
+  COMPRESS: NO  # Disabling built-in backup-driver compression. Keep it, if `--compress=ZSTD` flag present.
+
+- BACKUP_TYPE: X
+  ALIAS: backup_database
+  HOST: localhost
+  COMPRESSION_ALGORITHM: zstd                       # Use this for Percona XtraBackup 8.0.34-29 and later
+  ENCRYPT: NO
+  #UPLOAD: S3     # S3 | rsync | GS | AZ

@@ -65,6 +65,13 @@ mysql_servers =
         hostgroup=11
         comment="mysql84backup"
         max_replication_lag=10
+    },
+    {
+        address="192.168.56.181"
+        port=3306
+        hostgroup=11
+        comment="mysql8backup"
+        max_replication_lag=10
     }
 ) 
 

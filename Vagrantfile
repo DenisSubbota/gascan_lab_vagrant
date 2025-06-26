@@ -8,7 +8,8 @@ Vagrant.configure("2") do |config|
     { name: "mysql57", ip: "192.168.56.157", provision: "provision/provision_mysql57.sh", memory: 1024, cpus: 2, order: 4 },
     { name: "mysql8", ip: "192.168.56.180", provision: "provision/provision_mysql8.sh", memory: 1024, cpus: 2, order: 5 },
     { name: "mysql84", ip: "192.168.56.184", provision: "provision/provision_mysql84.sh", memory: 2048, cpus: 4, order: 6 },
-    { name: "mysql84backup", ip: "192.168.56.254", provision: "provision/provision_mysql84backup.sh", memory: 2048, cpus: 4, order: 7 }
+    { name: "mysql84backup", ip: "192.168.56.254", provision: "provision/provision_mysql84backup.sh", memory: 2048, cpus: 4, order: 7 },
+    { name: "mysql8backup", ip: "192.168.56.181", provision: "provision/provision_mysql8backup.sh", memory: 2048, cpus: 4, order: 8 }
   ]
 
   # Sort machines by :order before defining VMs

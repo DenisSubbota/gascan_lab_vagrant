@@ -13,6 +13,7 @@ A Vagrant-based lab for MySQL replication (5.7 → 8.0 → 8.4 → 8.4backup) an
 | mysql8         | 192.168.56.180  | MySQL 8.0 (Intermediate)        |
 | mysql84        | 192.168.56.184  | MySQL 8.4 (Target, main replication endpoint) |
 | mysql84backup  | 192.168.56.254  | MySQL 8.4 (Backup, replicates from mysql84)  |
+| mysql8backup   | 192.168.56.181  | MySQL 8.0 (Backup, replicates from mysql8)  |
 
 ## Quick Start
 1. **Clone and enter the lab:**
@@ -38,7 +39,8 @@ A Vagrant-based lab for MySQL replication (5.7 → 8.0 → 8.4 → 8.4backup) an
 mysql57 (Source) → mysql8 (Intermediate) → mysql84 (Target) → mysql84backup (Backup)
 ```
 - `mysql84` is the main replication target, replicating from `mysql8`.
-- `mysql84backup` replicates from `mysql84` for disaster recovery.
+- `mysql84backup` replicates from `mysql84` for disaster recovery
+- `mysql8backup` replicates from `mysql8` for disaster recovery
 
 ## ProxySQL Usage
 - Admin interface: `mysql` (as `percona_proxy` user, password: `password`, port 6032, auto-switched on login)
@@ -50,6 +52,7 @@ mysql57 (Source) → mysql8 (Intermediate) → mysql84 (Target) → mysql84backu
 - `mysql` as `percona` user (auto-switched on login)
 - Each node has a `.my.cnf` with a prompt showing the node name
 - mysql84backup replicates from mysql84 for disaster recovery
+- mysql8backup replicates from mysql8 for disaster recovery
 
 ## .env Example (`config/.env`)
 ```env
@@ -87,6 +90,7 @@ vagrant destroy   # Destroy all VMs
 - Add/modify VMs in `Vagrantfile`
 - Edit provisioning scripts in `provision/`
 - Change passwords/secrets in `.env` (never commit real secrets)
+- Add or configure backup nodes (mysql84backup, mysql8backup) as needed
 
 # TBD 
 - Instead of using bash provisioning, change to ansible provision 
