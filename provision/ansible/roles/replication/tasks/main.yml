@@ -3,10 +3,10 @@
 
 - name: Stop replication if running
   community.mysql.mysql_replication:
-    mode: stop
+    mode: stopslave
     login_user: percona
     login_password: Percona1234
-  ignore_errors: true
+  failed_when: false
   when: replication_source_host is defined
 
 - name: Configure replication (CHANGE MASTER/REPLICA TO)
@@ -22,7 +22,7 @@
 
 - name: Start replication
   community.mysql.mysql_replication:
-    mode: start
+    mode: startslave
     login_user: percona
     login_password: Percona1234
   when: replication_source_host is defined 
