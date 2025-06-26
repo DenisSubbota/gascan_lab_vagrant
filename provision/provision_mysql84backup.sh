@@ -125,8 +125,8 @@ sudo gpg --batch --gen-key /tmp/root-gpg-batch
 sudo rm -f /tmp/root-gpg-batch
 sudo bash -c 'echo "password" > /root/.gpg_passphrase'
 
-echo "[INFO] Copying backup_config.yml to /home/percona/.config/percona/backup/backup_config.yml..."
-sudo cp /vagrant/config/backup_config.yml /home/percona/.config/percona/backup/backup_config.yml
+echo "[INFO] Copying backup84_config.yml to /home/percona/.config/percona/backup/backup_config.yml..."
+sudo cp /vagrant/config/backup84_config.yml /home/percona/.config/percona/backup/backup_config.yml
 sudo chown percona:percona /home/percona/.config/percona/backup/backup_config.yml
 
 # Check for S3 and AWS credentials in /vagrant/config/.env and configure if present

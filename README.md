@@ -65,7 +65,6 @@ AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_key
 ```
 - Required for monitor node provisioning and SSH key setup
-- If S3_BUCKET and AWS credentials are provided, the backup node will auto-configure S3 backup and AWS CLI for root user.
 
 ## Stopping & Cleanup
 ```sh
