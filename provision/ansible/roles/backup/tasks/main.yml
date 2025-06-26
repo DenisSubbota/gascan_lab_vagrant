@@ -235,6 +235,14 @@
     mode: '0644'
   when: "'mysql84' in group_names"
 
+- name: Ensure /root/.aws directory exists
+  ansible.builtin.file:
+    path: /root/.aws
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
 - name: Configure /root/.aws/credentials if aws_s3_enabled
   ansible.builtin.copy:
     dest: /root/.aws/credentials

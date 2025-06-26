@@ -48,21 +48,21 @@ ALL_SERVERS:
 
 
 # -- AWS S3 --
-  {% if aws_s3_enabled|default(false) %}
+{% if aws_s3_enabled|default(false) %}
   S3_BUCKET: {{ s3_bucket }}
   RSYNC_PATH: /path
   ENCRYPT: YES
   ENCRYPT_USING_TMPDIR: NO
   UPLOAD_INTERVAL: daily
   S3_TOOL: awscli           # s3cmd | awscli 
-  {% else %}
+{% else %}
   S3_BUCKET: s3://<s3-bucket-name-for-percona>/ # Uncomment UPLOAD in SERVER_LIST if required.
   RSYNC_PATH: /path
   ENCRYPT: YES
   ENCRYPT_USING_TMPDIR: NO
   UPLOAD_INTERVAL: daily
   S3_TOOL: awscli           # s3cmd | awscli 
-  {% endif %}
+{% endif %}
 #  SKIP_S3_SAFETY_CHECK: False
 #  S3_STORAGE_CLASS: STANDARD # S3 storage class used to upload
 #  S3_LIMIT_RATE: # Amount may be expressed in bytes or with k|m suffix
@@ -97,5 +97,3 @@ SERVER_LIST:
   COMPRESSION_ALGORITHM: zstd                       # Use this for Percona XtraBackup 8.0.34-29 and later
   ENCRYPT: NO
   {% if aws_s3_enabled|default(false) %}UPLOAD: S3{% else %}#UPLOAD: S3{% endif %}     # S3 | rsync | GS | AZ
-
-</rewritten_file> 
