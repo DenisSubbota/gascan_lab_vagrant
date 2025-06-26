@@ -1,0 +1,60 @@
+datadir="/var/lib/proxysql"
+
+mysql_variables=
+{
+    monitor_username="percona"
+    monitor_password="Percona1234"
+}
+
+admin_variables=
+{
+    admin_credentials="admin:admin;percona_proxy:password"
+    mysql_ifaces="0.0.0.0:6032"
+    cluster_username="percona_proxy"
+    cluster_password="password"
+}
+
+proxysql_servers =
+(
+{% for host in groups['proxysql'] %}
+    {
+        hostname="{{ hostvars[host].ansible_host }}"
+        port=6032
+        comment="{{ host }}"
+    }{% if not loop.last %},{% endif %}
+{% endfor %}
+)
+
+mysql_replication_hostgroups=
+(
+    {
+        writer_hostgroup=10
+        reader_hostgroup=11
+    }
+)
+
+mysql_servers =
+(
+{% for host in groups['mysql57'] + groups['mysql8'] + groups['mysql84'] + groups['backup'] %}
+{% if host not in groups['restore'] %}
+    {
+        address="{{ hostvars[host].ansible_host }}"
+        port=3306
+        hostgroup={% if host in groups['mysql57'] %}10{% else %}11{% endif %}
+        comment="{{ host }}"
+        max_replication_lag=10
+    }{% if not loop.last %},{% endif %}
+{% endif %}
+{% endfor %}
+)
+
+mysql_users =
+(
+    {
+        username = "percona"
+        password = "Percona1234"
+        default_hostgroup = 10
+        transaction_persistent = 0
+        active = 1
+    }
+) 

@@ -1,3 +1,138 @@
 ---
 # tasks file for proxysql
 # TODO: Implement ProxySQL node provisioning tasks 
+
+- name: Ensure percona user exists
+  ansible.builtin.user:
+    name: percona
+    shell: /bin/bash
+    state: present
+    create_home: true
+
+- name: Ensure percona user has passwordless sudo
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/percona
+    content: 'percona ALL=(ALL) NOPASSWD:ALL'
+    mode: '0440'
+    owner: root
+    group: root
+
+- name: Set percona user password
+  ansible.builtin.user:
+    name: percona
+    password: "{{ 'percona' | password_hash('sha512') }}"
+
+- name: Copy .vagrant_profile to vagrant user
+  ansible.builtin.copy:
+    src: /vagrant/provision/.vagrant_profile
+    dest: /home/vagrant/.profile
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+
+- name: Copy .bashrc to percona user
+  ansible.builtin.copy:
+    src: /home/vagrant/.bashrc
+    dest: /home/percona/.bashrc
+    owner: percona
+    group: percona
+    mode: '0644'
+
+- name: Set up SSH authorized_keys for percona user
+  ansible.posix.authorized_key:
+    user: percona
+    state: present
+    key: "{{ lookup('file', '/vagrant/provision/monitor_id_rsa.pub') }}"
+  when: lookup('file', '/vagrant/provision/monitor_id_rsa.pub', errors='ignore') is not none
+
+- name: Generate SSH key for percona user if not exists
+  ansible.builtin.command:
+    cmd: ssh-keygen -t rsa -N "" -f /home/percona/.ssh/id_rsa
+    creates: /home/percona/.ssh/id_rsa
+  become: true
+  become_user: percona
+
+- name: Ensure required packages are installed
+  ansible.builtin.apt:
+    name:
+      - wget
+      - lsb-release
+      - gnupg2
+      - mysql-client-8.0
+    state: present
+    update_cache: true
+
+- name: Add ProxySQL repository key
+  ansible.builtin.apt_key:
+    url: https://repo.proxysql.com/ProxySQL/repo_pub_key
+    state: present
+
+- name: Add ProxySQL repository
+  ansible.builtin.apt_repository:
+    repo: "deb https://repo.proxysql.com/ProxySQL/proxysql-3.0.x/{{ ansible_lsb.codename }}/ ./"
+    state: present
+    filename: proxysql
+
+- name: Update apt cache after adding ProxySQL repo
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install ProxySQL
+  ansible.builtin.apt:
+    name: proxysql
+    state: present
+
+- name: Stop ProxySQL if running
+  ansible.builtin.service:
+    name: proxysql
+    state: stopped
+
+- name: Render ProxySQL config
+  ansible.builtin.template:
+    src: proxysql.cnf.j2
+    dest: /etc/proxysql.cnf
+    owner: proxysql
+    group: proxysql
+    mode: '0644'
+
+- name: Create .my.cnf for percona user
+  ansible.builtin.copy:
+    dest: /home/percona/.my.cnf
+    content: |
+      [client]
+      user=percona_proxy
+      password=password
+      host=127.0.0.1
+      port=6032
+      prompt={{ inventory_hostname }}> 
+    owner: percona
+    group: percona
+    mode: '0600'
+
+- name: Start ProxySQL service
+  ansible.builtin.service:
+    name: proxysql
+    state: started
+
+- name: Wait for ProxySQL to be ready
+  ansible.builtin.wait_for:
+    port: 6032
+    timeout: 30
+
+- name: Load ProxySQL config to runtime and save to disk
+  ansible.builtin.command:
+    cmd: >
+      mysql -e "
+      LOAD MYSQL SERVERS FROM CONFIG;
+      LOAD PROXYSQL SERVERS FROM CONFIG;
+      LOAD MYSQL SERVERS TO RUNTIME;
+      LOAD PROXYSQL SERVERS TO RUNTIME;
+      SAVE MYSQL SERVERS TO DISK;
+      SAVE PROXYSQL SERVERS TO DISK;
+      "
+  become: true
+  become_user: percona
+  register: proxysql_config_result
+  retries: 3
+  delay: 5
+  until: proxysql_config_result.rc == 0 
