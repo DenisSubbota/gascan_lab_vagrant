@@ -83,8 +83,8 @@
   when: lookup('file', '/vagrant/provision/monitor_id_rsa.pub', errors='ignore') is not none
 
 - name: Copy custom MySQL config
-  ansible.builtin.copy:
-    src: "/vagrant//config/{{ mysql_config_file }}"
+  ansible.builtin.template:
+    src: "{{ mysql_config_file }}.j2"
     dest: /etc/mysql/my.cnf
     owner: mysql
     group: mysql
