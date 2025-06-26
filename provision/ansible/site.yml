@@ -10,6 +10,7 @@
     - mysql57
     - mysql8
     - mysql84
+    - backup
   become: true
   roles:
     - mysql_install
@@ -19,6 +20,7 @@
     - mysql57
     - mysql8
     - mysql84
+    - backup
   become: true
   roles:
     - replication
