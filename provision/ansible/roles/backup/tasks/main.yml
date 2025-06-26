@@ -14,6 +14,17 @@
     state: present
     update_cache: true
 
+- name: Download Percona release package
+  ansible.builtin.get_url:
+    url: "https://repo.percona.com/apt/percona-release_latest.{{ ansible_lsb.codename }}_all.deb"
+    dest: /tmp/percona-release_latest_{{ ansible_lsb.codename }}_all.deb
+    mode: '0644'
+
+- name: Install Percona release package
+  ansible.builtin.apt:
+    deb: /tmp/percona-release_latest_{{ ansible_lsb.codename }}_all.deb
+    state: present
+
 - name: Enable Percona xtrabackup 8.0 repo (pxb-80) for MySQL 8.0
   ansible.builtin.command: percona-release enable pxb-80 release
   args:
