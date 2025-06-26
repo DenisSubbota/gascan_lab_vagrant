@@ -9,7 +9,29 @@
   failed_when: false
   when: replication_source_host is defined
 
-- name: Configure replication (CHANGE MASTER/REPLICA TO)
+- name: Get MySQL version
+  community.mysql.mysql_info:
+    filter: version
+    login_user: percona
+    login_password: Percona1234
+  register: mysql_info
+  when: replication_source_host is defined
+
+- name: Configure replication for MySQL 8.0.23+ (CHANGE REPLICATION SOURCE TO)
+  community.mysql.mysql_query:
+    login_user: percona
+    login_password: Percona1234
+    query: >
+      CHANGE REPLICATION SOURCE TO
+      SOURCE_HOST='{{ replication_source_host }}',
+      SOURCE_USER='percona',
+      SOURCE_PASSWORD='Percona1234',
+      SOURCE_AUTO_POSITION=1
+  when:
+    - replication_source_host is defined
+    - mysql_info.ansible_facts.mysql_version is version('8.0.23', '>=')
+
+- name: Configure replication for MySQL < 8.0.23 (CHANGE MASTER TO)
   community.mysql.mysql_replication:
     mode: changemaster
     master_host: "{{ replication_source_host }}"
@@ -18,11 +40,24 @@
     master_auto_position: true
     login_user: percona
     login_password: Percona1234
-  when: replication_source_host is defined
+  when:
+    - replication_source_host is defined
+    - mysql_info.ansible_facts.mysql_version is version('8.0.23', '<')
 
-- name: Start replication
+- name: Start replication for MySQL 8.0.23+ (START REPLICA)
+  community.mysql.mysql_query:
+    login_user: percona
+    login_password: Percona1234
+    query: START REPLICA;
+  when:
+    - replication_source_host is defined
+    - mysql_info.ansible_facts.mysql_version is version('8.0.23', '>=')
+
+- name: Start replication for MySQL < 8.0.23 (START SLAVE)
   community.mysql.mysql_replication:
     mode: startslave
     login_user: percona
     login_password: Percona1234
-  when: replication_source_host is defined 
+  when:
+    - replication_source_host is defined
+    - mysql_info.ansible_facts.mysql_version is version('8.0.23', '<') 
