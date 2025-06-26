@@ -69,7 +69,7 @@
       user=percona
       password=Percona1234
       host=localhost
-      prompt={{ mysql_prompt }}
+      prompt="{{ inventory_hostname }}> "
     owner: percona
     group: percona
     mode: '0600'

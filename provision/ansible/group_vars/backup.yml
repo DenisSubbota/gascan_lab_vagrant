@@ -1,7 +1,3 @@
 backup_dir: /var/log/percona/backups/
 enable_s3: true
-backup_cron_enabled: true
-ansible_config:
-  backup_config8: backup_config8.yml
-  backup_config84: backup84_config.yml
-  backup_driver_restore8: backup_driver_restore8.yml 
+backup_cron_enabled: true 
