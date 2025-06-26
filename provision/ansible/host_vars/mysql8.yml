@@ -1,0 +1,4 @@
+mysql_percona_repo: ps-80
+mysql_server_package: percona-server-server
+mysql_config_file: mysql8.cnf
+mysql_prompt: mysql8> 

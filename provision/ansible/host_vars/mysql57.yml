@@ -1,0 +1,4 @@
+mysql_percona_repo: ps-57
+mysql_server_package: percona-server-server-5.7
+mysql_config_file: mysql57.cnf
+mysql_prompt: mysql57> 

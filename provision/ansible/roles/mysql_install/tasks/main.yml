@@ -1,0 +1,116 @@
+---
+# tasks file for mysql_install
+# TODO: Implement MySQL installation and configuration tasks 
+
+- name: Ensure required apt packages are installed
+  ansible.builtin.apt:
+    name:
+      - gnupg2
+      - wget
+      - lsb-release
+    state: present
+    update_cache: true
+
+- name: Download Percona release package
+  ansible.builtin.get_url:
+    url: "https://repo.percona.com/apt/percona-release_latest.{{ ansible_lsb.codename }}_all.deb"
+    dest: /tmp/percona-release_latest_{{ ansible_lsb.codename }}_all.deb
+    mode: '0644'
+
+- name: Install Percona release package
+  ansible.builtin.apt:
+    deb: /tmp/percona-release_latest_{{ ansible_lsb.codename }}_all.deb
+    state: present
+
+- name: Enable Percona repo for correct version
+  ansible.builtin.command: >
+    percona-release enable-only {{ mysql_percona_repo }}
+  args:
+    creates: "/etc/apt/sources.list.d/percona-{{ mysql_percona_repo }}.list"
+
+- name: Update apt cache after enabling repo
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install Percona Server
+  ansible.builtin.apt:
+    name: "{{ mysql_server_package }}"
+    state: present
+    update_cache: true
+
+- name: Ensure percona user exists
+  ansible.builtin.user:
+    name: percona
+    shell: /bin/bash
+    state: present
+    create_home: true
+
+- name: Ensure percona user has passwordless sudo
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/percona
+    content: 'percona ALL=(ALL) NOPASSWD:ALL\n'
+    mode: '0440'
+    owner: root
+    group: root
+
+- name: Set percona user password
+  ansible.builtin.user:
+    name: percona
+    password: "{{ 'percona' | password_hash('sha512') }}"
+
+- name: Copy .vagrant_profile to vagrant user
+  ansible.builtin.copy:
+    src: ../../.vagrant_profile
+    dest: /home/vagrant/.profile
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+
+- name: Create .my.cnf for percona user
+  ansible.builtin.copy:
+    dest: /home/percona/.my.cnf
+    content: |
+      [client]
+      user=percona
+      password=Percona1234
+      host=localhost
+      prompt={{ mysql_prompt }}
+    owner: percona
+    group: percona
+    mode: '0600'
+
+- name: Set up SSH authorized_keys for percona user
+  ansible.posix.authorized_key:
+    user: percona
+    state: present
+    key: "{{ lookup('file', '../../monitor_id_rsa.pub') }}"
+  when: lookup('file', '../../monitor_id_rsa.pub', errors='ignore') is not none
+
+- name: Copy custom MySQL config
+  ansible.builtin.copy:
+    src: "../../config/{{ mysql_config_file }}"
+    dest: /etc/mysql/my.cnf
+    owner: mysql
+    group: mysql
+    mode: '0644'
+
+- name: Restart MySQL service
+  ansible.builtin.service:
+    name: mysql
+    state: restarted
+
+- name: Wait for MySQL to be ready
+  ansible.builtin.command: "mysqladmin ping --silent"
+  register: mysql_ping
+  retries: 10
+  delay: 2
+  until: mysql_ping.rc == 0
+
+- name: Import replication and monitoring users
+  community.mysql.mysql_db:
+    name: mysql
+    state: import
+    target: ../../provision/mysql_users.sql
+    login_user: root
+    login_password: ''
+  failed_when: false 

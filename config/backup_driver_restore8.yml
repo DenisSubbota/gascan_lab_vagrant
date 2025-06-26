@@ -3,7 +3,7 @@ ALL_SERVERS:
   PORT: 3336
   SSH_USER: root # ( default: percona ) 
   S3_TOOL: awscli # s3cmd (default) | awscli
-  GPG_PASSWORD_FILE: /root/.gpgpass
+  GPG_PASSWORD_FILE: /root/.gpg_passphrase
 
 SERVER_LIST:
 - ALIAS: restore_xb
@@ -24,7 +24,7 @@ SERVER_LIST:
 - ALIAS: restore_binlogs_s3
   BACKUP_TYPE: B
   DEST_HOST: localhost
-  BACKUP_SOURCE: s3://dummy/binlogs/primary
+  BACKUP_SOURCE: s3://<bucket_name>/binlogs/primary
   START_FILE: binlog.000030  # Leave commented STOP_FILE if you want to apply all binarylogs available in source from START_FILE onward
   START_POSITION: 157
   # STOP_FILE: binlog.000031 
@@ -43,7 +43,7 @@ SERVER_LIST:
 
 - ALIAS: restore_xb_s3
   BACKUP_TYPE: X
-  BACKUP_SOURCE: s3://dummy/xtrabackup/backup-gascan/latest
+  BACKUP_SOURCE: s3://<bucket_name>/xtrabackup/backup-gascan/latest
   SKIP_INCREMENTALS: SKIP_INCREMENTALS
   DATADIR: /data/mysql/data/
   KILL_MYSQL: yes
@@ -86,7 +86,7 @@ SERVER_LIST:
   SKIP_DATABASES: mysql,sys,information_schema,performance_schema
   MYLOADER_THREADS: 4
   DEST_PORT: 3306
-  BACKUP_SOURCE: s3://dummy/mydumper/backup-gascan/latest
+  BACKUP_SOURCE: s3://<bucket_name>/mydumper/backup-gascan/latest
   LOCAL_PATH: /tmp
   OVERWRITE_TABLES: yes
   MYLOADER_EXTRA_ARGS: --defaults-file=/root/.my.cnf # --serialized-table-creation extra args to add to myloader

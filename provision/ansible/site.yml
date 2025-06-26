@@ -1,0 +1,25 @@
+---
+- hosts: mysql
+  become: true
+  roles:
+    - mysql_install
+
+- hosts: backup
+  become: true
+  roles:
+    - backup
+
+- hosts: restore
+  become: true
+  roles:
+    - restore
+
+- hosts: proxysql
+  become: true
+  roles:
+    - proxysql
+
+- hosts: monitor
+  become: true
+  roles:
+    - monitor 
