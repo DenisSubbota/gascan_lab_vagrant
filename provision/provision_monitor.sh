@@ -1,6 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 # [INFO] Starting monitor provisioning
+echo "[INFO] Installing Ansible..."
+# Install Ansible
+sudo apt-get update
+sudo apt-get install -y ansible
 echo "[INFO] Running Ansible playbook for monitor configuration..."
 # Run the Ansible playbook for monitor configuration (idempotent)
 export ANSIBLE_HOST_KEY_CHECKING=False
@@ -14,6 +18,5 @@ sudo egrep 'ANSIBLE_VAULT_PASSWORD_FILE|GASCAN_DEFAULT_INVENTORY|GASCAN_INVENTOR
 echo "[INFO] Running gascan as percona user..."
 # Run gascan as percona user with environment loaded
 sudo -u percona -i /bin/bash -c 'source /tmp/.gascan_env && /home/percona/bin/gascan --limit=monitors'
-
 
 echo "[INFO] Monitor provisioning complete."
