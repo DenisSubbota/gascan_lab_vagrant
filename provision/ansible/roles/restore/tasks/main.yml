@@ -2,3 +2,269 @@
 # tasks file for restore
 # This role is for restore nodes, which are also in their MySQL version group (e.g., [mysql8], [mysql84])
 # TODO: Implement restore node provisioning tasks 
+
+- name: Ensure percona user exists
+  ansible.builtin.user:
+    name: percona
+    shell: /bin/bash
+    state: present
+    create_home: true
+
+- name: Ensure percona user has passwordless sudo
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/percona
+    content: 'percona ALL=(ALL) NOPASSWD:ALL'
+    mode: '0440'
+    owner: root
+    group: root
+
+- name: Set percona user password
+  ansible.builtin.user:
+    name: percona
+    password: "{{ 'percona' | password_hash('sha512') }}"
+
+- name: Copy .vagrant_profile to vagrant user
+  ansible.builtin.copy:
+    src: /vagrant/provision/.vagrant_profile
+    dest: /home/vagrant/.profile
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+
+- name: Copy .bashrc to percona user
+  ansible.builtin.copy:
+    src: /home/vagrant/.bashrc
+    dest: /home/percona/.bashrc
+    owner: percona
+    group: percona
+    mode: '0644'
+
+- name: Set up SSH authorized_keys for percona user
+  ansible.posix.authorized_key:
+    user: percona
+    state: present
+    key: "{{ lookup('file', '/vagrant/provision/monitor_id_rsa.pub') }}"
+  when: lookup('file', '/vagrant/provision/monitor_id_rsa.pub', errors='ignore') is not none
+
+- name: Generate SSH key for percona user if not exists
+  ansible.builtin.command:
+    cmd: ssh-keygen -t rsa -N "" -f /home/percona/.ssh/id_rsa
+    creates: /home/percona/.ssh/id_rsa
+  become: true
+  become_user: percona
+
+- name: Ensure required packages are installed
+  ansible.builtin.apt:
+    name:
+      - wget
+      - lsb-release
+      - gnupg2
+      - mysql-client-8.0
+      - awscli
+      - s3cmd
+    state: present
+    update_cache: true
+
+- name: Download Percona release package
+  ansible.builtin.get_url:
+    url: "https://repo.percona.com/apt/percona-release_latest.{{ ansible_lsb.codename }}_all.deb"
+    dest: /tmp/percona-release_latest_{{ ansible_lsb.codename }}_all.deb
+    mode: '0644'
+
+- name: Install Percona release package
+  ansible.builtin.apt:
+    deb: /tmp/percona-release_latest_{{ ansible_lsb.codename }}_all.deb
+    state: present
+
+- name: Enable Percona xtrabackup 8.0 repo (pxb-80) for MySQL 8.0
+  ansible.builtin.command: percona-release enable pxb-80 release
+  args:
+    creates: /etc/apt/sources.list.d/percona-pxb-80-release.list
+  when: "'mysql8' in group_names"
+
+- name: Enable Percona xtrabackup 8.4 repo (pxb-84-lts) for MySQL 8.4
+  ansible.builtin.command: percona-release enable pxb-84-lts
+  args:
+    creates: /etc/apt/sources.list.d/percona-pxb-84-lts.list
+  when: "'mysql84' in group_names"
+
+- name: Update apt cache after enabling pxb repo
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Install xtrabackup for MySQL 8.0
+  ansible.builtin.apt:
+    name: percona-xtrabackup-80
+    state: present
+  when: "'mysql8' in group_names"
+
+- name: Install xtrabackup for MySQL 8.4
+  ansible.builtin.apt:
+    name: percona-xtrabackup-84
+    state: present
+  when: "'mysql84' in group_names"
+
+- name: Download mydumper from GitHub
+  ansible.builtin.get_url:
+    url: https://github.com/mydumper/mydumper/releases/download/v0.19.3-2/mydumper_0.19.3-2.jammy_amd64.deb
+    dest: /tmp/mydumper_0.19.3-2.jammy_amd64.deb
+    mode: '0644'
+
+- name: Install mydumper deb package
+  ansible.builtin.apt:
+    deb: /tmp/mydumper_0.19.3-2.jammy_amd64.deb
+    state: present
+
+- name: Create restore directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: percona
+    group: percona
+    mode: '0755'
+  loop:
+    - /home/percona/bin
+    - /home/percona/.config/percona/restore/
+    - /var/log/percona/restores/
+    - /root/.config/percona/restore
+
+- name: Ensure .my.cnf for percona user
+  ansible.builtin.copy:
+    dest: /home/percona/.my.cnf
+    content: |
+      [client]
+      user=percona
+      password=Percona1234
+    owner: percona
+    group: percona
+    mode: '0600'
+
+- name: Ensure .my.cnf for root user
+  ansible.builtin.copy:
+    dest: /root/.my.cnf
+    content: |
+      [client]
+      user=percona
+      password=Percona1234
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Check if root GPG key exists
+  ansible.builtin.stat:
+    path: /root/.gnupg/pubring.kbx
+  register: gpg_key_stat
+
+- name: Create GPG batch file for root
+  ansible.builtin.copy:
+    dest: /tmp/root-gpg-batch
+    content: |
+      %no-protection
+      Key-Type: RSA
+      Key-Length: 2048
+      Name-Real: Directory Encryption
+      Name-Email: directory.encryption@percona.com
+      Expire-Date: 0
+      Passphrase: password
+      %commit
+    mode: '0600'
+  when: not gpg_key_stat.stat.exists
+
+- name: Generate GPG key for root user (idempotent)
+  ansible.builtin.command:
+    cmd: gpg --batch --gen-key /tmp/root-gpg-batch
+  args:
+    creates: /root/.gnupg/pubring.kbx
+  when: not gpg_key_stat.stat.exists
+
+- name: Remove GPG batch file after use
+  ansible.builtin.file:
+    path: /tmp/root-gpg-batch
+    state: absent
+  when: not gpg_key_stat.stat.exists
+
+- name: Ensure GPG passphrase file for root
+  ansible.builtin.copy:
+    dest: /root/.gpg_passphrase
+    content: "password"
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: Check if .env file exists
+  ansible.builtin.stat:
+    path: /vagrant/config/.env
+  register: env_file
+
+- name: Slurp .env file if present
+  ansible.builtin.slurp:
+    src: /vagrant/config/.env
+  register: env_content
+  when: env_file.stat.exists
+
+- name: Parse .env variables
+  set_fact:
+    env_vars: >-
+      {{ dict((env_content['content'] | b64decode | regex_findall('([A-Z0-9_]+)=([^\n]+)'))) }}
+  when: env_file.stat.exists
+
+- name: Set S3/AWS config variables if .env present
+  set_fact:
+    restore_s3_bucket: "{{ env_vars.S3_BUCKET }}"
+    restore_aws_access_key_id: "{{ env_vars.AWS_ACCESS_KEY_ID }}"
+    restore_aws_secret_access_key: "{{ env_vars.AWS_SECRET_ACCESS_KEY }}"
+  when: env_file.stat.exists and env_vars.S3_BUCKET is defined and env_vars.AWS_ACCESS_KEY_ID is defined and env_vars.AWS_SECRET_ACCESS_KEY is defined
+
+- name: Ensure /root/.aws directory exists
+  ansible.builtin.file:
+    path: /root/.aws
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Configure /root/.aws/credentials if .env present
+  ansible.builtin.copy:
+    dest: /root/.aws/credentials
+    content: |
+      [default]
+      aws_access_key_id = {{ restore_aws_access_key_id | default('') }}
+      aws_secret_access_key = {{ restore_aws_secret_access_key | default('') }}
+    owner: root
+    group: root
+    mode: '0600'
+  when: env_file.stat.exists and restore_aws_access_key_id is defined and restore_aws_secret_access_key is defined
+
+- name: Configure /root/.aws/config if .env present
+  ansible.builtin.copy:
+    dest: /root/.aws/config
+    content: |
+      [default]
+      region = us-east-1
+      output = json
+    owner: root
+    group: root
+    mode: '0600'
+  when: env_file.stat.exists
+
+- name: Configure /root/.s3cfg if .env present
+  ansible.builtin.copy:
+    dest: /root/.s3cfg
+    content: |
+      [default]
+      access_key = {{ restore_aws_access_key_id | default('') }}
+      secret_key = {{ restore_aws_secret_access_key | default('') }}
+      bucket_location = us-east-1
+      use_https = True
+    owner: root
+    group: root
+    mode: '0600'
+  when: env_file.stat.exists and restore_aws_access_key_id is defined and restore_aws_secret_access_key is defined
+
+- name: Render restore config
+  ansible.builtin.template:
+    src: restore_config.yml.j2
+    dest: /home/percona/.config/percona/restore/restore_config.yml
+    owner: percona
+    group: percona
+    mode: '0644' 
