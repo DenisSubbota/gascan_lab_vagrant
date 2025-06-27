@@ -36,8 +36,8 @@
   hosts: restores
   become: true
   roles:
-    - restore    
-    
+    - restore
+
 - name: Adding restore public keys to backup nodes
   hosts: backups
   become: true

@@ -43,6 +43,14 @@
     update_cache: true
 
 # === Restore Tooling ===
+- name: Download percona-backup binary
+  ansible.builtin.get_url:
+    url: https://cdba.percona.com/downloads/pex/backup/v0.5.3/amd64/ubuntu-jammy/percona-backup3.10
+    dest: /home/percona/bin/percona-backup
+    mode: '0755'
+    owner: percona
+    group: percona
+
 - name: Install xtrabackup for MySQL 8.0
   ansible.builtin.apt:
     name: percona-xtrabackup-80
@@ -75,9 +83,19 @@
     mode: '0755'
   loop:
     - /home/percona/bin
-    - /home/percona/.config/percona/restore/
-    - /var/log/percona/restores/
-    - /root/.config/percona/restore
+    - /home/percona/.config/percona/backup/
+    - /var/log/percona/backups/
+    - /root/.config/percona/backup
+
+# Import xb_keyfile from shared folder
+- name: Copy xb_keyfile from shared folder to restore directory
+  ansible.builtin.copy:
+    src: /vagrant/provision/xb_keyfile
+    dest: /home/percona/.config/percona/backup/xb_keyfile
+    owner: percona
+    group: percona
+    mode: '0600'
+    remote_src: true
 
 # === SSH Key Management ===
 - name: Check if root SSH key exists
@@ -230,7 +248,23 @@
 - name: Render restore config
   ansible.builtin.template:
     src: restore_config.yml.j2
-    dest: /home/percona/.config/percona/restore/restore_config.yml
+    dest: /home/percona/.config/percona/backup/restore_config.yml
     owner: percona
     group: percona
-    mode: '0644' 
+    mode: '0644'
+
+# Set backup node IP from inventory variable
+- name: Set backup node IP from inventory
+  ansible.builtin.set_fact:
+    backup_node_ip: "{{ hostvars[backup_node].ansible_host }}"
+  when: backup_node is defined
+
+# Set primary node alias from backup node's replication source
+- name: Set primary node alias from backup node's replication source
+  ansible.builtin.set_fact:
+    primary_node_alias: "{{ item }}"
+  when:
+    - backup_node is defined
+    - hostvars[backup_node].replication_source_host is defined
+    - hostvars[item].ansible_host == hostvars[backup_node].replication_source_host
+  loop: "{{ groups['all'] }}" 

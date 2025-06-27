@@ -1,68 +1,56 @@
 ALL_SERVERS:
   LOGGING_DIR: /var/log/percona/backups
-  PORT: {{ restore_port | default(3336) }}
-  SSH_USER: {{ restore_ssh_user | default('root') }} # ( default: percona ) 
-  S3_TOOL: {{ restore_s3_tool | default('awscli') }} # s3cmd (default) | awscli
+  PORT: 3336
+  SSH_USER: root
+  S3_TOOL: awscli # s3cmd (default) | awscli
   GPG_PASSWORD_FILE: /root/.gpg_passphrase
-
-SERVER_LIST:
-{% if restore_xtrabackup_enabled | default(false) %}
+  
 - ALIAS: restore_xb
   BACKUP_TYPE: X
-  BACKUP_SOURCE: {{ restore_xtrabackup_source | default('192.168.88.10:/backup/xtrabackup/backup-gascan/latest') }}
+  BACKUP_SOURCE: {{ backup_node_ip }}:/backup/xtrabackup/{{ backup_node }}/latest
   SKIP_INCREMENTALS: SKIP_INCREMENTALS
-  DATADIR: {{ restore_datadir | default('/data/mysql/data/') }}
+  DATADIR: /data/mysql/data/
   KILL_MYSQL: yes
-  XB_PREPARE_MEMORY: {{ restore_xb_prepare_memory | default('5000M') }}
-  XB_PARALLEL: {{ restore_xb_parallel | default(4) }}
+  XB_PREPARE_MEMORY: 5000M
+  XB_PARALLEL: 4
   XTRABACKUP_BIN_CMD: xtrabackup  #  innobackupex (default) | xtrabackup | mariadb-backup
-#  RESTORE_MYCNF: no # Restore mysqld conf files from backup directory ( Defatult: no)
-#  INCREMENTAL_DEST_PATH: /tmp/xb/incrementas # Custom incremental backup dir 
-#  XTRABACKUP_RESTORE_ARGS: 
-#  KEYRING_FILE_DATA: 
 #  XTRABACKUP_AES256_KEYFILE: /home/percona/.config/percona/backup/xb_keyfile
-{% endif %}
 
-{% if restore_binlogs_s3_enabled | default(false) %}
 - ALIAS: restore_binlogs_s3
   BACKUP_TYPE: B
   DEST_HOST: localhost
-  BACKUP_SOURCE: s3://{{ restore_s3_bucket | default('<bucket_name>') }}/binlogs/primary
-  START_FILE: {{ restore_binlog_start_file | default('binlog.000030') }}  # Leave commented STOP_FILE if you want to apply all binarylogs available in source from START_FILE onward
-  START_POSITION: {{ restore_binlog_start_position | default(157) }}
+  BACKUP_SOURCE: {{ restore_s3_bucket }}/binlogs/{{ primary_node_alias }}
+  START_FILE: binlog.000030  # Leave commented STOP_FILE if you want to apply all binarylogs available in source from START_FILE onward
+  START_POSITION: 157
   # STOP_FILE: binlog.000031 
   # STOP_POSITION: 2995 
   # USE_SQL_FILE: 
-{% endif %}
   
-{% if restore_binlogs_ssh_enabled | default(false) %}
 - ALIAS: restore_binlogs_ssh
   BACKUP_TYPE: B
   DEST_HOST: localhost
-  BACKUP_SOURCE: {{ restore_binlog_ssh_source | default('192.168.88.10:/backup/binlogs/primary') }}
-  START_FILE: {{ restore_binlog_start_file | default('binlog.000030') }}  # Leave commented STOP_FILE if you want to apply all binarylogs available in source from START_FILE onward
-  START_POSITION: {{ restore_binlog_start_position | default(157) }}
+  BACKUP_SOURCE: {{ backup_node_ip }}:/backup/binlogs/{{ primary_node_alias }}
+  START_FILE: binlog.000030  # Leave commented STOP_FILE if you want to apply all binarylogs available in source from START_FILE onward
+  START_POSITION: 157
   # STOP_FILE: binlog.000031 
   # STOP_POSITION: 2995 
   # USE_SQL_FILE:
-{% endif %}
 
-{% if restore_xtrabackup_s3_enabled | default(false) %}
 - ALIAS: restore_xb_s3
   BACKUP_TYPE: X
-  BACKUP_SOURCE: s3://{{ restore_s3_bucket | default('<bucket_name>') }}/xtrabackup/backup-gascan/latest
+  BACKUP_SOURCE: {{ restore_s3_bucket }}/xtrabackup/{{ backup_node }}/latest
   SKIP_INCREMENTALS: SKIP_INCREMENTALS
-  DATADIR: {{ restore_datadir | default('/data/mysql/data/') }}
+  DATADIR: /data/mysql/data/
   KILL_MYSQL: yes
-  XB_PREPARE_MEMORY: {{ restore_xb_prepare_memory | default('5000M') }}
-  XB_PARALLEL: {{ restore_xb_parallel | default(4) }}
+  XB_PREPARE_MEMORY: 5000M
+  XB_PARALLEL: 4
   XTRABACKUP_BIN_CMD: xtrabackup  #  innobackupex (default) | xtrabackup | mariadb-backup
-  SLAVE_FROM_MASTER: {{ restore_slave_from_master | default('no') }}  # Configuring replication using 
-  WAIT_FOR_CATCHUP: {{ restore_wait_for_catchup | default('no') }}
-  MASTER_IP: {{ restore_master_ip | default('192.168.88.1') }}
-  MASTER_PORT: {{ restore_master_port | default(3306) }}
-  MASTER_USER: {{ restore_master_user | default('repl') }}
-  MASTER_PASSWORD: {{ restore_master_password | default('*****') }}
+  SLAVE_FROM_MASTER: no  # Configuring replication using 
+  WAIT_FOR_CATCHUP: no
+  MASTER_IP: 192.168.88.1
+  MASTER_PORT: 3306
+  MASTER_USER: repl
+  MASTER_PASSWORD: *****
 #  RESTORE_MYCNF: no # Restore mysqld conf files from backup directory ( Defatult: no)
 #  INCREMENTAL_DEST_PATH: /tmp/xb/incrementas # Custom incremental backup dir 
 #  XTRABACKUP_RESTORE_ARGS: 
@@ -70,17 +58,15 @@ SERVER_LIST:
 #  XTRABACKUP_AES256_KEYFILE: /home/percona/.config/percona/backup/xb_keyfile
 #  PRE_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
 #  POST_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
-{% endif %}
 
-{% if restore_mydumper_enabled | default(false) %}
 - ALIAS: restore_mydumper
   BACKUP_TYPE: M
   DEST_HOST: localhost
-  SKIP_DATABASES: {{ restore_skip_databases | default('mysql,sys,information_schema,performance_schema') }}
-  MYLOADER_THREADS: {{ restore_myloader_threads | default(4) }}
-  DEST_PORT: {{ restore_dest_port | default(3306) }}
-  BACKUP_SOURCE: {{ restore_mydumper_source | default('192.168.88.10:/backup/mydumper/backup-gascan/latest') }}
-  LOCAL_PATH: {{ restore_local_path | default('/tmp') }}
+  SKIP_DATABASES: mysql,sys,information_schema,performance_schema
+  MYLOADER_THREADS: 4
+  DEST_PORT: 3306
+  BACKUP_SOURCE: {{ backup_node_ip }}:/backup/mydumper/{{ backup_node }}/latest
+  LOCAL_PATH: /tmp
   OVERWRITE_TABLES: yes
 #  MYLOADER_EXTRA_ARGS: --serialized-table-creation # extra args to add to myloader
 #  DATABASE: # --database myloader option (database to restore to)
@@ -88,17 +74,15 @@ SERVER_LIST:
 #  INCLUDE_DATABASES:
 #  PRE_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
 #  POST_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
-{% endif %}
 
-{% if restore_mydumper_s3_enabled | default(false) %}
 - ALIAS: restore_mydumper_s3
   BACKUP_TYPE: M
   DEST_HOST: localhost
-  SKIP_DATABASES: {{ restore_skip_databases | default('mysql,sys,information_schema,performance_schema') }}
-  MYLOADER_THREADS: {{ restore_myloader_threads | default(4) }}
-  DEST_PORT: {{ restore_dest_port | default(3306) }}
-  BACKUP_SOURCE: s3://{{ restore_s3_bucket | default('<bucket_name>') }}/mydumper/backup-gascan/latest
-  LOCAL_PATH: {{ restore_local_path | default('/tmp') }}
+  SKIP_DATABASES: mysql,sys,information_schema,performance_schema
+  MYLOADER_THREADS: 4
+  DEST_PORT: 3306
+  BACKUP_SOURCE: {{ restore_s3_bucket }}/mydumper/{{ backup_node }}/latest
+  LOCAL_PATH: /tmp
   OVERWRITE_TABLES: yes
   MYLOADER_EXTRA_ARGS: --defaults-file=/root/.my.cnf # --serialized-table-creation extra args to add to myloader
 #  DATABASE: # --database myloader option (database to restore to)
@@ -106,17 +90,14 @@ SERVER_LIST:
 #  INCLUDE_DATABASES:
 #  PRE_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
 #  POST_SCRIPT:  # .sql scripts will be run on DEST_HOST:DEST_PORT
-{% endif %}
 
-{% if restore_mydumper_single_table_enabled | default(false) %}
 - ALIAS: restore_mydumper_single_table
   DEST_HOST: localhost
   SKIP_DATABASES: "*"
-  INCLUDE_DATABASES: {{ restore_include_databases | default('database1,metadata') }}
+  INCLUDE_DATABASES: database1,metadata
   MYLOADER_EXTRA_ARGS: --source-db=database1 --regex=^database1\.table1 --database=database1 --serialized-table-creation --defaults-file=/root/.my.cnf
-  DEST_PORT: {{ restore_dest_port | default(3306) }}
+  DEST_PORT: 3306
   BACKUP_TYPE: M
-  BACKUP_SOURCE: {{ restore_mydumper_source | default('192.168.88.10:/backup/mydumper/backup-gascan/latest') }}
-  LOCAL_PATH: {{ restore_local_path | default('/tmp') }}
+  BACKUP_SOURCE: {{ backup_node_ip }}:/backup/mydumper/{{ backup_node }}/latest
+  LOCAL_PATH: /tmp
   OVERWRITE_TABLES: yes
-{% endif %}
