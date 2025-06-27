@@ -96,33 +96,27 @@
     path: /root/.gnupg/pubring.kbx
   register: gpg_key_stat
 
-- name: Create GPG batch file for root
-  ansible.builtin.copy:
-    dest: /tmp/root-gpg-batch
-    content: |
-      %no-protection
-      Key-Type: RSA
-      Key-Length: 2048
-      Name-Real: Directory Encryption
-      Name-Email: directory.encryption@percona.com
-      Expire-Date: 0
-      Passphrase: password
-      %commit
-    mode: '0600'
-  when: not gpg_key_stat.stat.exists
+- name: Check for exported GPG keys in shared folder
+  ansible.builtin.stat:
+    path: "/vagrant/provision/gpg_root_directory_encryption_priv.asc"
+  register: gpg_priv_exported
 
-- name: Generate GPG key for root user (idempotent)
+- name: Import GPG private key if present in shared folder
   ansible.builtin.command:
-    cmd: gpg --batch --gen-key /tmp/root-gpg-batch
-  args:
-    creates: /root/.gnupg/pubring.kbx
-  when: not gpg_key_stat.stat.exists
+    cmd: gpg --import /vagrant/provision/gpg_root_directory_encryption_priv.asc
+  when: gpg_priv_exported.stat.exists
+  become: true
 
-- name: Remove GPG batch file after use
-  ansible.builtin.file:
-    path: /tmp/root-gpg-batch
-    state: absent
-  when: not gpg_key_stat.stat.exists
+- name: Check for exported GPG public key in shared folder
+  ansible.builtin.stat:
+    path: "/vagrant/provision/gpg_root_directory_encryption_pub.asc"
+  register: gpg_pub_exported
+
+- name: Import GPG public key if present in shared folder
+  ansible.builtin.command:
+    cmd: gpg --import /vagrant/provision/gpg_root_directory_encryption_pub.asc
+  when: gpg_pub_exported.stat.exists
+  become: true
 
 - name: Ensure GPG passphrase file for root
   ansible.builtin.copy:
@@ -131,6 +125,15 @@
     owner: root
     group: root
     mode: '0600'
+
+# Copy GPG passphrase to shared folder
+- name: Copy GPG passphrase to shared folder
+  ansible.builtin.copy:
+    dest: /vagrant/provision/.gpg_passphrase
+    content: "password"
+    owner: root
+    group: root
+    mode: '0644'
 
 - name: Ensure .my.cnf for percona user
   ansible.builtin.copy:
@@ -188,13 +191,13 @@
   when: env_file.stat.exists
 
 - name: Parse .env variables
-  set_fact:
+  ansible.builtin.set_fact:
     env_vars: >-
       {{ dict((env_content['content'] | b64decode | regex_findall('([A-Z0-9_]+)=([^\n]+)'))) }}
   when: env_file.stat.exists
 
 - name: Set S3/AWS config variables if .env present
-  set_fact:
+  ansible.builtin.set_fact:
     aws_s3_enabled: true
     s3_bucket: "{{ env_vars.S3_BUCKET }}"
     aws_access_key_id: "{{ env_vars.AWS_ACCESS_KEY_ID }}"
@@ -202,7 +205,7 @@
   when: env_file.stat.exists and env_vars.S3_BUCKET is defined and env_vars.AWS_ACCESS_KEY_ID is defined and env_vars.AWS_SECRET_ACCESS_KEY is defined
 
 - name: Set S3/AWS config variables to defaults if .env not present
-  set_fact:
+  ansible.builtin.set_fact:
     aws_s3_enabled: false
     s3_bucket: ""
     aws_access_key_id: ""
@@ -210,7 +213,7 @@
   when: env_file.stat.exists == false or env_vars.S3_BUCKET is not defined or env_vars.AWS_ACCESS_KEY_ID is not defined or env_vars.AWS_SECRET_ACCESS_KEY is not defined
 
 - name: Find alias for replication_source_host
-  set_fact:
+  ansible.builtin.set_fact:
     replication_source_alias: "{{ item }}"
   when:
     - replication_source_host is defined
@@ -301,3 +304,49 @@
 
 # Optionally, add S3 and AWS CLI configuration here if enable_s3 is true
 # (You can extend this with Ansible's lineinfile/template modules as needed) 
+
+# Only create GPG key if not present and not imported
+- name: Create GPG batch file for root
+  ansible.builtin.copy:
+    dest: /tmp/root-gpg-batch
+    content: |
+      %no-protection
+      Key-Type: RSA
+      Key-Length: 2048
+      Name-Real: Directory Encryption
+      Name-Email: directory.encryption@percona.com
+      Expire-Date: 0
+      Passphrase: password
+      %commit
+    mode: '0600'
+  when: not gpg_key_stat.stat.exists and not gpg_priv_exported.stat.exists
+
+- name: Generate GPG key for root user (idempotent)
+  ansible.builtin.command:
+    cmd: gpg --batch --gen-key /tmp/root-gpg-batch
+  args:
+    creates: /root/.gnupg/pubring.kbx
+  when: not gpg_key_stat.stat.exists and not gpg_priv_exported.stat.exists
+
+- name: Remove GPG batch file after use
+  ansible.builtin.file:
+    path: /tmp/root-gpg-batch
+    state: absent
+  when: not gpg_key_stat.stat.exists and not gpg_priv_exported.stat.exists
+
+# Export GPG keys to shared folder after creation or import
+- name: Export GPG public key to shared folder
+  ansible.builtin.command:
+    cmd: gpg --export -a directory.encryption@percona.com > /vagrant/provision/gpg_root_directory_encryption_pub.asc
+    args:
+      creates: /vagrant/provision/gpg_root_directory_encryption_pub.asc
+  when: gpg_key_stat.stat.exists or gpg_priv_exported.stat.exists
+  become: true
+
+- name: Export GPG private key to shared folder
+  ansible.builtin.command:
+    cmd: gpg --export-secret-keys -a directory.encryption@percona.com > /vagrant/provision/gpg_root_directory_encryption_priv.asc
+    args:
+      creates: /vagrant/provision/gpg_root_directory_encryption_priv.asc
+  when: gpg_key_stat.stat.exists or gpg_priv_exported.stat.exists
+  become: true 

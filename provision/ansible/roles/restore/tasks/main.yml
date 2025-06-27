@@ -2,6 +2,8 @@
 # tasks file for restore
 # This role is for restore nodes, which are also in their MySQL version group (e.g., [mysql8], [mysql84])
 # TODO: Implement restore node provisioning tasks 
+
+# === System Preparation ===
 - name: Ensure required packages are installed
   ansible.builtin.apt:
     name:
@@ -40,6 +42,7 @@
   ansible.builtin.apt:
     update_cache: true
 
+# === Restore Tooling ===
 - name: Install xtrabackup for MySQL 8.0
   ansible.builtin.apt:
     name: percona-xtrabackup-80
@@ -76,6 +79,34 @@
     - /var/log/percona/restores/
     - /root/.config/percona/restore
 
+# === SSH Key Management ===
+- name: Check if root SSH key exists
+  ansible.builtin.stat:
+    path: /root/.ssh/id_rsa
+  register: root_ssh_key_stat
+
+- name: Generate SSH key for root user if not present
+  ansible.builtin.command:
+    cmd: ssh-keygen -t rsa -N '' -f /root/.ssh/id_rsa
+  args:
+    creates: /root/.ssh/id_rsa
+  when: not root_ssh_key_stat.stat.exists
+
+- name: Ensure /vagrant/provision directory exists
+  ansible.builtin.file:
+    path: /vagrant/provision
+    state: directory
+    mode: '0777'
+
+- name: Copy root public key to shared folder
+  ansible.builtin.copy:
+    src: /root/.ssh/id_rsa.pub
+    dest: "/vagrant/provision/{{ inventory_hostname }}_root_id_rsa.pub"
+    owner: root
+    group: root
+    mode: '0644'
+
+# === MySQL Client Config ===
 - name: Ensure .my.cnf for root user
   ansible.builtin.copy:
     dest: /root/.my.cnf
@@ -87,47 +118,43 @@
     group: root
     mode: '0600'
 
-- name: Check if root GPG key exists
+# === GPG Key Import (Fail if missing) ===
+- name: Check for exported GPG private key in shared folder
   ansible.builtin.stat:
-    path: /root/.gnupg/pubring.kbx
-  register: gpg_key_stat
+    path: /vagrant/provision/gpg_root_directory_encryption_priv.asc
+  register: gpg_priv_exported
 
-- name: Create GPG batch file for root
-  ansible.builtin.copy:
-    dest: /tmp/root-gpg-batch
-    content: |
-      %no-protection
-      Key-Type: RSA
-      Key-Length: 2048
-      Name-Real: Directory Encryption
-      Name-Email: directory.encryption@percona.com
-      Expire-Date: 0
-      Passphrase: password
-      %commit
-    mode: '0600'
-  when: not gpg_key_stat.stat.exists
+- name: Fail if GPG private key is not present in shared folder
+  ansible.builtin.fail:
+    msg: "GPG private key for directory encryption is missing in /vagrant/provision/gpg_root_directory_encryption_priv.asc. Restore cannot proceed."
+  when: not gpg_priv_exported.stat.exists
 
-- name: Generate GPG key for root user (idempotent)
+- name: Import GPG private key from shared folder
   ansible.builtin.command:
-    cmd: gpg --batch --gen-key /tmp/root-gpg-batch
-  args:
-    creates: /root/.gnupg/pubring.kbx
-  when: not gpg_key_stat.stat.exists
+    cmd: gpg --import /vagrant/provision/gpg_root_directory_encryption_priv.asc
+  when: gpg_priv_exported.stat.exists
+  become: true
 
-- name: Remove GPG batch file after use
-  ansible.builtin.file:
-    path: /tmp/root-gpg-batch
-    state: absent
-  when: not gpg_key_stat.stat.exists
+- name: Check for exported GPG public key in shared folder
+  ansible.builtin.stat:
+    path: /vagrant/provision/gpg_root_directory_encryption_pub.asc
+  register: gpg_pub_exported
 
-- name: Ensure GPG passphrase file for root
+- name: Import GPG public key from shared folder
+  ansible.builtin.command:
+    cmd: gpg --import /vagrant/provision/gpg_root_directory_encryption_pub.asc
+  when: gpg_pub_exported.stat.exists
+  become: true
+
+- name: Copy GPG passphrase from shared folder to root
   ansible.builtin.copy:
+    src: /vagrant/provision/.gpg_passphrase
     dest: /root/.gpg_passphrase
-    content: "password"
     owner: root
     group: root
     mode: '0600'
 
+# === Cloud/S3 Config ===
 - name: Check if .env file exists
   ansible.builtin.stat:
     path: /vagrant/config/.env
@@ -140,13 +167,13 @@
   when: env_file.stat.exists
 
 - name: Parse .env variables
-  set_fact:
+  ansible.builtin.set_fact:
     env_vars: >-
       {{ dict((env_content['content'] | b64decode | regex_findall('([A-Z0-9_]+)=([^\n]+)'))) }}
   when: env_file.stat.exists
 
 - name: Set S3/AWS config variables if .env present
-  set_fact:
+  ansible.builtin.set_fact:
     restore_s3_bucket: "{{ env_vars.S3_BUCKET }}"
     restore_aws_access_key_id: "{{ env_vars.AWS_ACCESS_KEY_ID }}"
     restore_aws_secret_access_key: "{{ env_vars.AWS_SECRET_ACCESS_KEY }}"
@@ -198,6 +225,7 @@
     mode: '0600'
   when: env_file.stat.exists and restore_aws_access_key_id is defined and restore_aws_secret_access_key is defined
 
+# === Render Restore Config ===
 - name: Render restore config
   ansible.builtin.template:
     src: restore_config.yml.j2
