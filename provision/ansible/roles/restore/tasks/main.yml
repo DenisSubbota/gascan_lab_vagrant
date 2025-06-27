@@ -2,59 +2,12 @@
 # tasks file for restore
 # This role is for restore nodes, which are also in their MySQL version group (e.g., [mysql8], [mysql84])
 # TODO: Implement restore node provisioning tasks 
-
-- name: Ensure percona user exists
-  ansible.builtin.user:
-    name: percona
-    shell: /bin/bash
-    state: present
-    create_home: true
-
-- name: Ensure percona user has passwordless sudo
-  ansible.builtin.copy:
-    dest: /etc/sudoers.d/percona
-    content: 'percona ALL=(ALL) NOPASSWD:ALL'
-    mode: '0440'
-    owner: root
-    group: root
-
-- name: Copy .vagrant_profile to vagrant user
-  ansible.builtin.copy:
-    src: /vagrant/provision/.vagrant_profile
-    dest: /home/vagrant/.profile
-    owner: vagrant
-    group: vagrant
-    mode: '0644'
-
-- name: Copy .bashrc to percona user
-  ansible.builtin.copy:
-    src: /home/vagrant/.bashrc
-    dest: /home/percona/.bashrc
-    owner: percona
-    group: percona
-    mode: '0644'
-
-- name: Set up SSH authorized_keys for percona user
-  ansible.posix.authorized_key:
-    user: percona
-    state: present
-    key: "{{ lookup('file', '/vagrant/provision/monitor_id_rsa.pub') }}"
-  when: lookup('file', '/vagrant/provision/monitor_id_rsa.pub', errors='ignore') is not none
-
-- name: Generate SSH key for percona user if not exists
-  ansible.builtin.command:
-    cmd: ssh-keygen -t rsa -N "" -f /home/percona/.ssh/id_rsa
-    creates: /home/percona/.ssh/id_rsa
-  become: true
-  become_user: percona
-
 - name: Ensure required packages are installed
   ansible.builtin.apt:
     name:
       - wget
       - lsb-release
       - gnupg2
-      - mysql-client-8.0
       - awscli
       - s3cmd
     state: present
@@ -122,17 +75,6 @@
     - /home/percona/.config/percona/restore/
     - /var/log/percona/restores/
     - /root/.config/percona/restore
-
-- name: Ensure .my.cnf for percona user
-  ansible.builtin.copy:
-    dest: /home/percona/.my.cnf
-    content: |
-      [client]
-      user=percona
-      password=Percona1234
-    owner: percona
-    group: percona
-    mode: '0600'
 
 - name: Ensure .my.cnf for root user
   ansible.builtin.copy:
