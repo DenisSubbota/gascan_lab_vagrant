@@ -1,0 +1,29 @@
+---
+- name: Gather all restore root public keys from shared folder
+  ansible.builtin.find:
+    paths: /vagrant/provision
+    patterns: "*_root_id_rsa.pub"
+  register: restore_pubkeys
+
+- name: Ensure root .ssh directory exists
+  ansible.builtin.file:
+    path: /root/.ssh
+    state: directory
+    owner: root
+    group: root
+    mode: '0700'
+
+- name: Add restore root public keys to root's authorized_keys
+  ansible.builtin.shell: |
+    cat {{ item.path }} >> /root/.ssh/authorized_keys
+  loop: "{{ restore_pubkeys.files }}"
+  when: restore_pubkeys.matched > 0
+  become: true
+
+- name: Set correct permissions on authorized_keys
+  ansible.builtin.file:
+    path: /root/.ssh/authorized_keys
+    owner: root
+    group: root
+    mode: '0600'
+  when: restore_pubkeys.matched > 0 

@@ -36,7 +36,13 @@
   hosts: restores
   become: true
   roles:
-    - restore
+    - restore    
+    
+- name: Adding restore public keys to backup nodes
+  hosts: backups
+  become: true
+  roles:
+    - collect_restore_pubkeys
 
 - name: Provision all ProxySQL nodes
   hosts: proxysqls
