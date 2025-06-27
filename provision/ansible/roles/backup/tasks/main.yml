@@ -336,13 +336,13 @@
 
 # Export GPG keys to shared folder after creation or import
 - name: Export GPG public key to shared folder
-  ansible.builtin.command:
-    cmd: gpg --export -a directory.encryption@percona.com > /vagrant/provision/gpg_root_directory_encryption_pub.asc
+  ansible.builtin.shell: |
+    GNUPGHOME=/root/.gnupg gpg --export -a directory.encryption@percona.com > /vagrant/provision/gpg_root_directory_encryption_pub.asc
   when: gpg_key_stat.stat.exists or gpg_priv_exported.stat.exists
   become: true
 
 - name: Export GPG private key to shared folder
-  ansible.builtin.command:
-    cmd: gpg --export-secret-keys -a directory.encryption@percona.com > /vagrant/provision/gpg_root_directory_encryption_priv.asc
+  ansible.builtin.shell: |
+    GNUPGHOME=/root/.gnupg gpg --export-secret-keys -a directory.encryption@percona.com > /vagrant/provision/gpg_root_directory_encryption_priv.asc
   when: gpg_key_stat.stat.exists or gpg_priv_exported.stat.exists
   become: true 
