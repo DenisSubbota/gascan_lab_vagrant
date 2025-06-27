@@ -57,7 +57,6 @@ if [ -f /vagrant/provision/monitor_id_rsa.pub ]; then
     sudo chmod 700 /home/percona/.ssh
     sudo chmod 600 /home/percona/.ssh/authorized_keys
 fi
-
 echo "[INFO] Copying custom MySQL config..."
 sudo cp /vagrant/config/mysql8.cnf /etc/mysql/my.cnf
 sudo chown mysql:mysql /etc/mysql/my.cnf

@@ -3,14 +3,14 @@ Vagrant.configure("2") do |config|
   # Set :order to control the order in which VMs are defined and brought up
   machines = [
     { name: "monitor", ip: "192.168.56.100", provision: "provision/provision_monitor.sh", memory: 6144, cpus: 4, order: 1 },
-    { name: "proxysql1", ip: "192.168.56.101", provision: "provision/provision_proxysql1.sh", memory: 512, cpus: 1, order: 2 },
-    { name: "proxysql2", ip: "192.168.56.102", provision: "provision/provision_proxysql2.sh", memory: 512, cpus: 1, order: 3 },
-    { name: "mysql57", ip: "192.168.56.157", provision: "provision/provision_mysql57.sh", memory: 1024, cpus: 2, order: 4 },
-    { name: "mysql8", ip: "192.168.56.180", provision: "provision/provision_mysql8.sh", memory: 1024, cpus: 2, order: 5 },
-    { name: "mysql84", ip: "192.168.56.184", provision: "provision/provision_mysql84.sh", memory: 2048, cpus: 4, order: 6 },
-    { name: "mysql84backup", ip: "192.168.56.254", provision: "provision/provision_mysql84backup.sh", memory: 2048, cpus: 4, order: 7 },
-    { name: "mysql8restore", ip: "192.168.56.182", provision: "provision/provision_mysql8restore.sh", memory: 2048, cpus: 4, order: 8 },
-    { name: "mysql8backup", ip: "192.168.56.181", provision: "provision/provision_mysql8backup.sh", memory: 2048, cpus: 4, order: 9 }
+    { name: "proxysql1", ip: "192.168.56.101", provision: "provision/percona_user_ssh_setup.sh", memory: 512, cpus: 1, order: 2 },
+    { name: "proxysql2", ip: "192.168.56.102", provision: "provision/percona_user_ssh_setup.sh", memory: 512, cpus: 1, order: 3 },
+    { name: "mysql57", ip: "192.168.56.157", provision: "provision/percona_user_ssh_setup.sh", memory: 1024, cpus: 2, order: 4 },
+    { name: "mysql8", ip: "192.168.56.180", provision: "provision/percona_user_ssh_setup.sh", memory: 1024, cpus: 2, order: 5 },
+    { name: "mysql84", ip: "192.168.56.184", provision: "provision/percona_user_ssh_setup.sh", memory: 2048, cpus: 4, order: 6 },
+    { name: "mysql84backup", ip: "192.168.56.254", provision: "provision/percona_user_ssh_setup.sh", memory: 2048, cpus: 4, order: 7 },
+    { name: "mysql8restore", ip: "192.168.56.182", provision: "provision/percona_user_ssh_setup.sh", memory: 2048, cpus: 4, order: 8 },
+    { name: "mysql8backup", ip: "192.168.56.181", provision: "provision/percona_user_ssh_setup.sh", memory: 2048, cpus: 4, order: 9 }
   ]
 
   # Sort machines by :order before defining VMs
