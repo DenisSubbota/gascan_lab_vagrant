@@ -60,7 +60,7 @@
 - name: Parse other .env variables (simple approach)
   ansible.builtin.set_fact:
     env_vars: >-
-      {{ dict((env_content['content'] | b64decode | regex_findall('^([A-Z0-9_]+)=(.*)$', multiline=True, flags='M'))) }}
+      {{ dict((env_content['content'] | b64decode | regex_findall('^([A-Z0-9_]+)=(.*)$', multiline=True))) }}
   when: env_file.stat.exists
 
 - name: Set environment variables from .env
