@@ -10,7 +10,7 @@
       - acl
       - mysql-client-core-8.0
       - curl
-      - ansible
+      - podman
       - sudo
       - iputils-ping
       - vim
