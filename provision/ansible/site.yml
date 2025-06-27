@@ -1,45 +1,45 @@
 ---
 - name: Provision all monitor nodes
-  hosts: monitor
+  hosts: monitors
   become: true
   roles:
     - monitor
 
 - name: Provision all MySQL nodes
   hosts:
-    - mysql57
-    - mysql8
-    - mysql84
-    - backup
-    - restore
+    - mysqls57
+    - mysqls8
+    - mysqls84
+    - backups
+    - restores
   become: true
   roles:
     - mysql_install
 
 - name: Configure replication on all MySQL nodes
   hosts:
-    - mysql57
-    - mysql8
-    - mysql84
-    - backup
+    - mysqls57
+    - mysqls8
+    - mysqls84
+    - backups
   become: true
   roles:
     - replication
 
 - name: Provision all backup nodes
-  hosts: backup
+  hosts: backups
   become: true
   roles:
     - backup
 
 - name: Provision all restore nodes
-  hosts: restore
+  hosts: restores
   become: true
   roles:
     - restore
 
 - name: Provision all ProxySQL nodes
-  hosts: proxysql
+  hosts: proxysqls
   become: true
   roles:
     - proxysql

@@ -29,13 +29,13 @@
   ansible.builtin.command: percona-release enable pxb-80 release
   args:
     creates: /etc/apt/sources.list.d/percona-pxb-80-release.list
-  when: "'mysql8' in group_names"
+  when: "'mysqls8' in group_names"
 
 - name: Enable Percona xtrabackup 8.4 repo (pxb-84-lts) for MySQL 8.4
   ansible.builtin.command: percona-release enable pxb-84-lts
   args:
     creates: /etc/apt/sources.list.d/percona-pxb-84-lts.list
-  when: "'mysql84' in group_names"
+  when: "'mysqls84' in group_names"
 
 - name: Update apt cache after enabling pxb repo
   ansible.builtin.apt:
@@ -45,13 +45,13 @@
   ansible.builtin.apt:
     name: percona-xtrabackup-80
     state: present
-  when: "'mysql8' in group_names"
+  when: "'mysqls8' in group_names"
 
 - name: Install xtrabackup for MySQL 8.4
   ansible.builtin.apt:
     name: percona-xtrabackup-84
     state: present
-  when: "'mysql84' in group_names"
+  when: "'mysqls84' in group_names"
 
 - name: Install mydumper (universal for both versions)
   ansible.builtin.apt:
@@ -224,7 +224,7 @@
     owner: percona
     group: percona
     mode: '0644'
-  when: "'mysql8' in group_names"
+  when: "'mysqls8' in group_names"
 
 - name: Render backup config for MySQL 8.4
   ansible.builtin.template:
@@ -233,7 +233,7 @@
     owner: percona
     group: percona
     mode: '0644'
-  when: "'mysql84' in group_names"
+  when: "'mysqls84' in group_names"
 
 - name: Ensure /root/.aws directory exists
   ansible.builtin.file:

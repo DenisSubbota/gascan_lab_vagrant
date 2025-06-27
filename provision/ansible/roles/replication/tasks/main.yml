@@ -21,7 +21,7 @@
       SOURCE_AUTO_POSITION=1
   when:
     - replication_source_host is defined
-    - "'mysql84' in group_names"
+    - "'mysqls84' in group_names"
 
 - name: Configure replication for other MySQL versions (CHANGE MASTER TO)
   community.mysql.mysql_replication:
@@ -34,7 +34,7 @@
     login_password: Percona1234
   when:
     - replication_source_host is defined
-    - "'mysql84' not in group_names"
+    - "'mysqls84' not in group_names"
 
 - name: Start replication for MySQL 8.4 (START REPLICA)
   community.mysql.mysql_query:
@@ -43,7 +43,7 @@
     query: START REPLICA;
   when:
     - replication_source_host is defined
-    - "'mysql84' in group_names"
+    - "'mysqls84' in group_names"
 
 - name: Start replication for other MySQL versions (START SLAVE)
   community.mysql.mysql_replication:
@@ -52,4 +52,4 @@
     login_password: Percona1234
   when:
     - replication_source_host is defined
-    - "'mysql84' not in group_names" 
+    - "'mysqls84' not in group_names" 

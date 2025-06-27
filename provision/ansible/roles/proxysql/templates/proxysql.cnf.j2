@@ -16,7 +16,7 @@ admin_variables=
 
 proxysql_servers =
 (
-{% for host in groups['proxysql'] %}
+{% for host in groups['proxysqls'] %}
     {
         hostname="{{ hostvars[host].ansible_host }}"
         port=6032
@@ -35,12 +35,12 @@ mysql_replication_hostgroups=
 
 mysql_servers =
 (
-{% for host in groups['mysql57'] + groups['mysql8'] + groups['mysql84'] + groups['backup'] %}
-{% if host not in groups['restore'] %}
+{% for host in groups['mysqls57'] + groups['mysqls8'] + groups['mysqls84'] + groups['backups'] %}
+{% if host not in groups['restores'] %}
     {
         address="{{ hostvars[host].ansible_host }}"
         port=3306
-        hostgroup={% if host in groups['mysql57'] %}10{% else %}11{% endif %}
+        hostgroup={% if host in groups['mysqls57'] %}10{% else %}11{% endif %}
         comment="{{ host }}"
         max_replication_lag=10
     }{% if not loop.last %},{% endif %}
