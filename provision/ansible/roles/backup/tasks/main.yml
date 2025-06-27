@@ -1,7 +1,6 @@
 ---
 # tasks file for backup
 # This role is for backup nodes, which are also in their MySQL version group (e.g., [mysql8], [mysql84])
-# TODO: Implement backup node provisioning tasks 
 
 - name: Ensure required packages for backup are installed
   ansible.builtin.apt:

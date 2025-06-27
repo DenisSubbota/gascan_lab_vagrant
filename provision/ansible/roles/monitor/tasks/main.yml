@@ -1,3 +1,244 @@
 ---
 # tasks file for monitor
-# TODO: Implement monitor node provisioning tasks 
+# This role is for the monitor node which orchestrates the entire lab
+
+# === System Preparation ===
+- name: Install required packages for monitor
+  ansible.builtin.apt:
+    name:
+      - wget
+      - acl
+      - mysql-client-core-8.0
+      - curl
+      - ansible
+      - sudo
+      - iputils-ping
+      - vim
+    state: present
+    update_cache: true
+
+# === User Setup ===
+- name: Create percona user with passwordless sudo
+  ansible.builtin.user:
+    name: percona
+    shell: /bin/bash
+    create_home: true
+    state: present
+
+- name: Ensure sudoers.d directory exists
+  ansible.builtin.file:
+    path: /etc/sudoers.d
+    state: directory
+    mode: '0755'
+
+- name: Configure passwordless sudo for percona user
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/percona
+    content: "percona ALL=(ALL) NOPASSWD:ALL"
+    mode: '0440'
+    validate: 'visudo -cf %s'
+
+# === SSH Key Management ===
+- name: Check if .env file exists for USER_PUB_KEY
+  ansible.builtin.stat:
+    path: /vagrant/config/.env
+  register: env_file
+
+- name: Slurp .env file if present
+  ansible.builtin.slurp:
+    src: /vagrant/config/.env
+  register: env_content
+  when: env_file.stat.exists
+
+- name: Parse .env variables
+  ansible.builtin.set_fact:
+    env_vars: >-
+      {{ dict((env_content['content'] | b64decode | regex_findall('([A-Z0-9_]+)=([^\n]+)'))) }}
+  when: env_file.stat.exists
+
+- name: Set environment variables from .env
+  ansible.builtin.set_fact:
+    user_pub_key: "{{ env_vars.USER_PUB_KEY | default('') }}"
+    gascan_version: "{{ env_vars.GASCAN_VERSION | default('v1.10.0') }}"
+    customer_env: "{{ env_vars.CUSTOMER_ENV | default('monitor-gascan') }}"
+    api_key: "{{ env_vars.API_KEY | default('') }}"
+    client_identifier: "{{ env_vars.CLIENT_IDENTIFIER | default('') }}"
+  when: env_file.stat.exists
+
+- name: Ensure percona .ssh directory exists
+  ansible.builtin.file:
+    path: /home/percona/.ssh
+    state: directory
+    owner: percona
+    group: percona
+    mode: '0700'
+
+- name: Add user public key to authorized_keys if present
+  ansible.builtin.lineinfile:
+    path: /home/percona/.ssh/authorized_keys
+    line: "{{ user_pub_key }}"
+    state: present
+  when: user_pub_key | length > 0
+  failed_when: false
+
+- name: Generate SSH key for percona user if not exists
+  ansible.builtin.command:
+    cmd: ssh-keygen -t rsa -N '' -f /home/percona/.ssh/id_rsa
+  args:
+    creates: /home/percona/.ssh/id_rsa
+  become: true
+  become_user: percona
+
+- name: Copy percona public key to shared location
+  ansible.builtin.copy:
+    src: /home/percona/.ssh/id_rsa.pub
+    dest: /vagrant/config/monitor_id_rsa.pub
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: true
+
+# === MySQL Client Configuration ===
+- name: Create .my.cnf for percona user
+  ansible.builtin.copy:
+    dest: /home/percona/.my.cnf
+    content: |
+      [client]
+      user=percona
+      password=Percona1234
+    owner: percona
+    group: percona
+    mode: '0600'
+
+# === Gascan Installation ===
+- name: Enable lingering for the Percona user
+  ansible.builtin.command:
+    cmd: "loginctl enable-linger percona"
+  args:
+    creates: "/var/lib/systemd/linger/percona"
+
+- name: Create bin directory in percona home
+  ansible.builtin.file:
+    path: "/home/percona/bin"
+    state: directory
+    mode: '0750'
+    owner: percona
+    group: percona
+
+- name: Download gascan binary
+  ansible.builtin.get_url:
+    url: "https://cdba.percona.com/downloads/gascan/{{ gascan_version }}/linux/amd64/ubuntu-jammy/gascan-py3.10"
+    dest: "/home/percona/bin/gascan"
+    mode: '0764'
+    owner: percona
+    group: percona
+
+# === Environment Configuration ===
+- name: Update .bashrc for percona user with custom PS1 and env variables
+  ansible.builtin.blockinfile:
+    path: "/home/percona/.bashrc"
+    marker: "# {mark} Custom setup for gascan"
+    mode: '0764'
+    owner: percona
+    group: percona
+    block: |
+      # Set up a colorful prompt
+      RESET="\[\033[0m\]"
+      COLOR_USER="\[\033[0;36m\]"
+      COLOR_HOST="\[\033[1;31m\]"
+      COLOR_DIR="\[\033[0;33m\]"
+      COLOR_CMD="\[\033[0;37;00m\]"
+      COLOR_CLIENT="\[\033[1;32m\]"
+      MONITOR_NAME=monitor-gascan
+      SSH_MS_NAME={{ customer_env }}
+
+      # Useful aliases
+      alias avv="ansible-vault view ~/.config/gascan/secrets.yaml"
+      alias db_tree='PEX_SCRIPT=db_tree.py ~/bin/gas-tools'
+
+      export ANSIBLE_VAULT_PASSWORD_FILE='~/.config/gascan/.vault-key'
+      export GASCAN_DEFAULT_INVENTORY=0
+      export GASCAN_INVENTORY_CONFIG_FILE='~/.config/gascan/inventory-config.json'
+      export PS1="[${COLOR_CLIENT}${SSH_MS_NAME}${RESET}] ${COLOR_USER}\u${RESET}@${COLOR_HOST}${MONITOR_NAME}${RESET}: ${COLOR_DIR}\W ${RESET}\\$ ${COLOR_CMD}"
+      export PATH=$PATH:~/bin
+      export GASCAN_FLAG_PASSWORDLESS_SUDO=1
+
+# === Gascan Configuration ===
+- name: Extract gascan bundle (idempotent)
+  ansible.builtin.command:
+    cmd: "/home/percona/bin/gascan --monitor={{ customer_env }} --extract-bundle --extract-path=/home/percona"
+  become_user: percona
+  become: true
+
+- name: Configure api_key and client_identifier for SN inventory connectivity
+  ansible.builtin.copy:
+    dest: "/home/percona/.config/gascan/inventory-config.json"
+    content: |
+      {
+        "headers": {
+          "CDBAng-Auth-Id": "{{ client_identifier }}",
+          "CDBAng-Auth-Token": "{{ api_key }}",
+          "CDBAng-Monitor-Name": "{{ customer_env }}",
+          "Content-type": "application/json"
+        },
+        "key_file": "/home/percona/.config/gascan/.vault-key",
+        "retry_attempts": 3,
+        "retry_wait_seconds": 10,
+        "uri": "https://cdba.percona.com/ng/inventory"
+      }
+    owner: percona
+    group: percona
+    mode: '0600'
+
+# === Hosts File Configuration ===
+- name: Add DB and ProxySQL host entries to /etc/hosts
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ item }}"
+    state: present
+  loop:
+    - "192.168.56.101  proxysql1"
+    - "192.168.56.102  proxysql2"
+    - "192.168.56.157  mysql57"
+    - "192.168.56.180  mysql8"
+    - "192.168.56.184  mysql84"
+    - "192.168.56.185  mysql84backup"
+    - "192.168.56.181  mysql8backup"
+    - "192.168.56.182  mysql8restore"
+    - "192.168.56.186  mysql84restore"
+
+# === Final Configuration ===
+- name: Copy .vagrant_profile to vagrant user's .profile
+  ansible.builtin.copy:
+    src: /vagrant/provision/.vagrant_profile
+    dest: /home/vagrant/.profile
+    owner: vagrant
+    group: vagrant
+    mode: '0644'
+
+# === Optional: Verify inventory from SN ===
+- name: Verify inventory from SN (optional, can be skipped in CI)
+  ansible.builtin.command:
+    cmd: "/home/percona/bin/gascan -refresh -get-inventory"
+  become_user: percona
+  become: true
+  register: gascan_inventory
+  failed_when: false
+  changed_when: false
+  ignore_errors: true
+
+# === Run gascan for monitors ===
+- name: Extract GASCAN environment variables
+  ansible.builtin.shell: |
+    set -o pipefail
+    egrep 'ANSIBLE_VAULT_PASSWORD_FILE|GASCAN_DEFAULT_INVENTORY|GASCAN_INVENTORY_CONFIG_FILE|GASCAN_FLAG_PASSWORDLESS_SUDO' /home/percona/.bashrc > /tmp/.gascan_env
+  args:
+    creates: /tmp/.gascan_env
+
+- name: Run gascan as percona user
+  ansible.builtin.shell: |
+    source /tmp/.gascan_env && /home/percona/bin/gascan --limit=monitors
+  become: true
+  become_user: percona
+  environment:
+    ANSIBLE_HOST_KEY_CHECKING: "False" 

@@ -12,7 +12,7 @@ A Vagrant-based lab for MySQL replication (5.7 → 8.0 → 8.4 → 8.4backup) an
 | mysql57        | 192.168.56.157  | MySQL 5.7 (Source)              |
 | mysql8         | 192.168.56.180  | MySQL 8.0 (Intermediate)        |
 | mysql84        | 192.168.56.184  | MySQL 8.4 (Target, main replication endpoint) |
-| mysql84backup  | 192.168.56.254  | MySQL 8.4 (Backup, replicates from mysql84)  |
+| mysql84backup  | 192.168.56.185  | MySQL 8.4 (Backup, replicates from mysql84)  |
 | mysql8backup   | 192.168.56.181  | MySQL 8.0 (Backup, replicates from mysql8)  |
 
 ## Quick Start
@@ -60,8 +60,7 @@ USER_PUB_KEY='ssh-rsa ...yourkey...'
 API_KEY=your_api_key_here
 CLIENT_IDENTIFIER=your_client_identifier_here
 GASCAN_VERSION=v1.30.0
-SSH_MS_NAME=lab_name-gascan
-CUSTMER_ENV=lab_name_SN-gascan
+CUSTOMER_ENV=lab_name-gascan
 # Optional for backup S3 integration:
 S3_BUCKET=s3://your-bucket-name/
 AWS_ACCESS_KEY_ID=your_aws_access_key
