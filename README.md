@@ -206,26 +206,25 @@ Once the monitor node is provisioned and you have SSH access to it, you can run 
 
 **Basic usage:**
 ```sh
-cd /vagrant/provision/ansible
-sudo ansible-playbook -i inventory/lab site.yml --limit <group_or_host>
+sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab site.yml --limit <group_or_host>
 ```
 
 **Examples:**
 - Run all roles for all nodes:
   ```sh
-  sudo ansible-playbook -i inventory/lab site.yml
+  sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab site.yml
   ```
 - Run only the monitor role:
   ```sh
-  sudo ansible-playbook -i inventory/lab site.yml --limit monitors
+  sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab site.yml --limit monitors
   ```
 - Run only the backup role for backup nodes:
   ```sh
-  sudo ansible-playbook -i inventory/lab site.yml --limit backups
+  sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab site.yml --limit backups
   ```
 - Run a specific role for a specific host:
   ```sh
-  sudo ansible-playbook -i inventory/lab site.yml --limit mysql8
+  sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab site.yml --limit mysql8
   ```
 
 **Notes:**
