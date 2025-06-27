@@ -3,8 +3,8 @@ set -euo pipefail
 # [INFO] Starting monitor provisioning
 echo "[INFO] Installing Ansible..."
 # Install Ansible
-sudo apt-get update
-sudo apt-get install -y ansible
+sudo apt-get update > /dev/null
+sudo apt-get install -y ansible > /dev/null
 echo "[INFO] Running Ansible playbook for monitor configuration..."
 # Run the Ansible playbook for monitor configuration (idempotent)
 export ANSIBLE_HOST_KEY_CHECKING=False
