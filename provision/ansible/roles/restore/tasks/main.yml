@@ -98,13 +98,14 @@
     state: directory
     mode: '0777'
 
-- name: Copy root public key to shared folder
+- name: Copy root ssh public key to shared folder
   ansible.builtin.copy:
     src: /root/.ssh/id_rsa.pub
     dest: "/vagrant/provision/{{ inventory_hostname }}_root_id_rsa.pub"
     owner: root
     group: root
     mode: '0644'
+    remote_src: true
 
 # === MySQL Client Config ===
 - name: Ensure .my.cnf for root user
