@@ -72,6 +72,11 @@
     client_identifier: "{{ env_vars.CLIENT_IDENTIFIER | default('') }}"
   when: env_file.stat.exists
 
+- name: Debug user_pub_key value
+  ansible.builtin.debug:
+    msg: "user_pub_key={{ user_pub_key }}"
+  when: env_file.stat.exists
+
 - name: Ensure percona .ssh directory exists
   ansible.builtin.file:
     path: /home/percona/.ssh
@@ -88,6 +93,33 @@
   when: user_pub_key | length > 0
   failed_when: false
 
+- name: Stat percona id_rsa
+  ansible.builtin.stat:
+    path: /home/percona/.ssh/id_rsa
+  register: percona_id_rsa_stat
+
+- name: Stat percona id_rsa.pub
+  ansible.builtin.stat:
+    path: /home/percona/.ssh/id_rsa.pub
+  register: percona_id_rsa_pub_stat
+
+- name: Stat monitor_id_rsa.pub
+  ansible.builtin.stat:
+    path: /vagrant/config/monitor_id_rsa.pub
+  register: monitor_id_rsa_pub_stat
+
+- name: Read percona id_rsa.pub
+  ansible.builtin.slurp:
+    src: /home/percona/.ssh/id_rsa.pub
+  register: percona_id_rsa_pub_content
+  when: percona_id_rsa_pub_stat.stat.exists
+
+- name: Read monitor_id_rsa.pub
+  ansible.builtin.slurp:
+    src: /vagrant/config/monitor_id_rsa.pub
+  register: monitor_id_rsa_pub_content
+  when: monitor_id_rsa_pub_stat.stat.exists
+
 - name: Generate SSH key for percona user if not exists
   ansible.builtin.command:
     cmd: ssh-keygen -t rsa -N '' -f /home/percona/.ssh/id_rsa
@@ -95,8 +127,9 @@
     creates: /home/percona/.ssh/id_rsa
   become: true
   become_user: percona
+  when: not percona_id_rsa_stat.stat.exists
 
-- name: Copy percona public key to shared location
+- name: Copy percona public key to shared location if not present or differs
   ansible.builtin.copy:
     src: /home/percona/.ssh/id_rsa.pub
     dest: /vagrant/config/monitor_id_rsa.pub
@@ -104,6 +137,11 @@
     group: root
     mode: '0644'
     remote_src: true
+  when: >-
+    percona_id_rsa_pub_stat.stat.exists and (
+      not monitor_id_rsa_pub_stat.stat.exists or
+      (percona_id_rsa_pub_content.content | default('') | b64decode != monitor_id_rsa_pub_content.content | default('') | b64decode)
+    )
 
 # === MySQL Client Configuration ===
 - name: Create .my.cnf for percona user
