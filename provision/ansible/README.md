@@ -19,7 +19,7 @@ This directory contains a fully role-based Ansible provisioning system for the l
 3. Run the playbook:
    ```sh
    /vagrant/provision/ansible
-   sudo ansible-playbook -i inventory/lab site.yml --limit mysql57 -u percona --private-key=/home/percona/.ssh/id_rsa
+   sudo ansible-playbook -i inventory/lab.ini site.yml --limit mysql57 -u percona --private-key=/home/percona/.ssh/id_rsa
   
    ```
 
