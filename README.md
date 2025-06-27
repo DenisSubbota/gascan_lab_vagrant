@@ -206,25 +206,25 @@ Once the monitor node is provisioned and you have SSH access to it, you can run 
 
 **Basic usage:**
 ```sh
-sudo ansible-playbook -i inventory/lab.ini site.yml --limit <group_or_host>
+sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab.ini /vagrant/provision/ansible/site.yml --limit <group_or_host>
 ```
 
 **Examples:**
 - Run all roles for all nodes:
   ```sh
-  sudo ansible-playbook -i inventory/lab.ini site.yml
+  sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab.ini /vagrant/provision/ansible/site.yml
   ```
 - Run only the monitor role:
   ```sh
-  sudo ansible-playbook -i inventory/lab.ini site.yml --limit monitors
+  sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab.ini /vagrant/provision/ansible/site.yml --limit monitors
   ```
 - Run only the backup role for backup nodes:
   ```sh
-  sudo ansible-playbook -i inventory/lab.ini site.yml --limit backups
+  sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab.ini /vagrant/provision/ansible/site.yml --limit backups
   ```
 - Run a specific role for a specific host:
   ```sh
-  sudo ansible-playbook -i inventory/lab.ini site.yml --limit mysql8
+  sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab.ini /vagrant/provision/ansible/site.yml --limit mysql8
   ```
 
 **Notes:**
@@ -263,17 +263,15 @@ sudo ansible-playbook -i inventory/lab.ini site.yml --limit <group_or_host>
 
 ## To-Do / Ideas
 
-- Instead of using bash provisioning, change to ansible provision
 - Deploy auto-gascan update binary
 - pxc 3 instance 8.0 (replicas of 57)
 - Basic setup with PD alerting DMS etc
 - Orchestrator configuration
 - VIP over db nodes
 - VIP over proxysql node
-- Backup node (Auto configuration)
-- Restore instance
 - Consul DNS
 - mysql84 should have 2 mysql instances on a host
 - Multi-source replication: use 8.4 multiple instances for this purpose (8.4 is a replica of 8.4)
 
+- probably if no client_identifier and api-key present use some default inventory for gascan
 ---
