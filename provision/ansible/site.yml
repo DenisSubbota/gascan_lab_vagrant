@@ -11,6 +11,7 @@
     - mysql8
     - mysql84
     - backup
+    - restore
   become: true
   roles:
     - mysql_install
