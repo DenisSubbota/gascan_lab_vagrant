@@ -210,7 +210,7 @@
 # === Final Configuration ===
 - name: Copy .vagrant_profile to vagrant user's .profile
   ansible.builtin.copy:
-    src: /vagrant/provision/.vagrant_profile
+    src: /vagrant/config/.vagrant_profile
     dest: /home/vagrant/.profile
     owner: vagrant
     group: vagrant
