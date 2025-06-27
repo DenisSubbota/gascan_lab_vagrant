@@ -91,7 +91,7 @@
 # Import xb_keyfile from shared folder
 - name: Copy xb_keyfile from shared folder to restore directory
   ansible.builtin.copy:
-    src: /vagrant/provision/xb_keyfile
+    src: /vagrant/config/xb_keyfile
     dest: /home/percona/.config/percona/backup/xb_keyfile
     owner: percona
     group: percona
@@ -120,7 +120,7 @@
 - name: Copy root ssh public key to shared folder
   ansible.builtin.copy:
     src: /root/.ssh/id_rsa.pub
-    dest: "/vagrant/provision/{{ inventory_hostname }}_root_id_rsa.pub"
+    dest: "/vagrant/config/{{ inventory_hostname }}_root_id_rsa.pub"
     owner: root
     group: root
     mode: '0644'
@@ -141,34 +141,34 @@
 # === GPG Key Import (Fail if missing) ===
 - name: Check for exported GPG private key in shared folder
   ansible.builtin.stat:
-    path: /vagrant/provision/gpg_root_directory_encryption_priv.asc
+    path: /vagrant/config/gpg_root_directory_encryption_priv.asc
   register: gpg_priv_exported
 
 - name: Fail if GPG private key is not present in shared folder
   ansible.builtin.fail:
-    msg: "GPG private key for directory encryption is missing in /vagrant/provision/gpg_root_directory_encryption_priv.asc. Restore cannot proceed."
+    msg: "GPG private key for directory encryption is missing in /vagrant/config/gpg_root_directory_encryption_priv.asc. Restore cannot proceed."
   when: not gpg_priv_exported.stat.exists
 
 - name: Import GPG private key from shared folder
   ansible.builtin.command:
-    cmd: gpg --import /vagrant/provision/gpg_root_directory_encryption_priv.asc
+    cmd: gpg --import /vagrant/config/gpg_root_directory_encryption_priv.asc
   when: gpg_priv_exported.stat.exists
   become: true
 
 - name: Check for exported GPG public key in shared folder
   ansible.builtin.stat:
-    path: /vagrant/provision/gpg_root_directory_encryption_pub.asc
+    path: /vagrant/config/gpg_root_directory_encryption_pub.asc
   register: gpg_pub_exported
 
 - name: Import GPG public key from shared folder
   ansible.builtin.command:
-    cmd: gpg --import /vagrant/provision/gpg_root_directory_encryption_pub.asc
+    cmd: gpg --import /vagrant/config/gpg_root_directory_encryption_pub.asc
   when: gpg_pub_exported.stat.exists
   become: true
 
 - name: Copy GPG passphrase from shared folder to root
   ansible.builtin.copy:
-    src: /vagrant/provision/.gpg_passphrase
+    src: /vagrant/config/.gpg_passphrase
     dest: /root/.gpg_passphrase
     owner: root
     group: root
@@ -269,4 +269,4 @@
     dest: /home/percona/.config/percona/backup/restore_config.yml
     owner: percona
     group: percona
-    mode: '0644' 
+    mode: '0644'

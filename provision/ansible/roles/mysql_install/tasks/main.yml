@@ -56,7 +56,7 @@
 
 - name: Copy .vagrant_profile to vagrant user
   ansible.builtin.copy:
-    src: /vagrant/provision/.vagrant_profile
+    src: /vagrant/config/.vagrant_profile
     dest: /home/vagrant/.profile
     owner: vagrant
     group: vagrant
@@ -79,8 +79,8 @@
   ansible.posix.authorized_key:
     user: percona
     state: present
-    key: "{{ lookup('file', '/vagrant/provision/monitor_id_rsa.pub') }}"
-  when: lookup('file', '/vagrant/provision/monitor_id_rsa.pub', errors='ignore') is not none
+    key: "{{ lookup('file', '/vagrant/config/monitor_id_rsa.pub') }}"
+  when: lookup('file', '/vagrant/config/monitor_id_rsa.pub', errors='ignore') is not none
 
 - name: Copy custom MySQL config
   ansible.builtin.template:
@@ -106,5 +106,5 @@
   community.mysql.mysql_db:
     name: mysql
     state: import
-    target: /vagrant/provision/mysql_users.sql
+    target: /vagrant/config/mysql_users.sql
     login_unix_socket: /var/run/mysqld/mysqld.sock

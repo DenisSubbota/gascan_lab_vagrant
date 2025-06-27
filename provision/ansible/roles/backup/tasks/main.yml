@@ -98,23 +98,23 @@
 
 - name: Check for exported GPG keys in shared folder
   ansible.builtin.stat:
-    path: "/vagrant/provision/gpg_root_directory_encryption_priv.asc"
+    path: "/vagrant/config/gpg_root_directory_encryption_priv.asc"
   register: gpg_priv_exported
 
 - name: Import GPG private key if present in shared folder
   ansible.builtin.command:
-    cmd: gpg --import /vagrant/provision/gpg_root_directory_encryption_priv.asc
+    cmd: gpg --import /vagrant/config/gpg_root_directory_encryption_priv.asc
   when: gpg_priv_exported.stat.exists
   become: true
 
 - name: Check for exported GPG public key in shared folder
   ansible.builtin.stat:
-    path: "/vagrant/provision/gpg_root_directory_encryption_pub.asc"
+    path: "/vagrant/config/gpg_root_directory_encryption_pub.asc"
   register: gpg_pub_exported
 
 - name: Import GPG public key if present in shared folder
   ansible.builtin.command:
-    cmd: gpg --import /vagrant/provision/gpg_root_directory_encryption_pub.asc
+    cmd: gpg --import /vagrant/config/gpg_root_directory_encryption_pub.asc
   when: gpg_pub_exported.stat.exists
   become: true
 
@@ -129,7 +129,7 @@
 # Copy GPG passphrase to shared folder
 - name: Copy GPG passphrase to shared folder
   ansible.builtin.copy:
-    dest: /vagrant/provision/.gpg_passphrase
+    dest: /vagrant/config/.gpg_passphrase
     content: "password"
     owner: root
     group: root
@@ -169,7 +169,7 @@
 - name: Export xb_keyfile to shared folder
   ansible.builtin.copy:
     src: /home/percona/.config/percona/backup/xb_keyfile
-    dest: /vagrant/provision/xb_keyfile
+    dest: /vagrant/config/xb_keyfile
     owner: percona
     group: percona
     mode: '0600'
@@ -220,7 +220,11 @@
     s3_bucket: ""
     aws_access_key_id: ""
     aws_secret_access_key: ""
-  when: env_file.stat.exists == false or env_vars.S3_BUCKET is not defined or env_vars.AWS_ACCESS_KEY_ID is not defined or env_vars.AWS_SECRET_ACCESS_KEY is not defined
+  when: >-
+    not env_file.stat.exists or
+    env_vars.S3_BUCKET is not defined or
+    env_vars.AWS_ACCESS_KEY_ID is not defined or
+    env_vars.AWS_SECRET_ACCESS_KEY is not defined
 
 - name: Find alias for replication_source_host
   ansible.builtin.set_fact:
@@ -247,6 +251,17 @@
     group: percona
     mode: '0644'
   when: "'mysqls84' in group_names"
+
+- name: Kill existing backup processes
+  ansible.builtin.command:
+    cmd: sudo pkill -f /home/percona/.config/percona/backup/backup_config.yml
+  ignore_errors: true
+  register: kill_result
+
+- name: Debug kill result
+  ansible.builtin.debug:
+    msg: "Killed {{ kill_result.rc }} backup processes"
+  when: kill_result.rc == 0
 
 - name: Ensure /root/.aws directory exists
   ansible.builtin.file:
@@ -288,7 +303,7 @@
       access_key = {{ aws_access_key_id }}
       secret_key = {{ aws_secret_access_key }}
       bucket_location = us-east-1
-      use_https = True
+      use_https = true
     owner: root
     group: root
     mode: '0600'
@@ -304,7 +319,10 @@
 - name: Ensure backup cron job is present if enabled
   ansible.builtin.lineinfile:
     path: /etc/cron.d/percona_crons
-    line: "* * * * * root PERCONA_BACKUP_TEXTFILE_COLLECTOR_DIR='/home/percona/pmm/collectors/textfile-collector/low-resolution/' PEX_SCRIPT=backup_driver.py /home/percona/bin/percona-backup --config /home/percona/.config/percona/backup/backup_config.yml -l /tmp/backup_driver.lock"
+    line: >-
+      "* * * * * root PERCONA_BACKUP_TEXTFILE_COLLECTOR_DIR='/home/percona/pmm/collectors/textfile-collector/low-resolution/'
+      PEX_SCRIPT=backup_driver.py /home/percona/bin/percona-backup --config
+      /home/percona/.config/percona/backup/backup_config.yml -l /tmp/backup_driver.lock"
     create: yes
     owner: root
     group: root
@@ -346,12 +364,12 @@
 # Export GPG keys to shared folder after creation or import
 - name: Export GPG public key to shared folder
   ansible.builtin.shell: |
-    GNUPGHOME=/root/.gnupg gpg --export -a directory.encryption@percona.com > /vagrant/provision/gpg_root_directory_encryption_pub.asc
+    GNUPGHOME=/root/.gnupg gpg --export -a directory.encryption@percona.com > /vagrant/config/gpg_root_directory_encryption_pub.asc
   when: gpg_key_stat.stat.exists or gpg_priv_exported.stat.exists
   become: true
 
 - name: Export GPG private key to shared folder
   ansible.builtin.shell: |
-    GNUPGHOME=/root/.gnupg gpg --export-secret-keys -a directory.encryption@percona.com > /vagrant/provision/gpg_root_directory_encryption_priv.asc
+    GNUPGHOME=/root/.gnupg gpg --export-secret-keys -a directory.encryption@percona.com > /vagrant/config/gpg_root_directory_encryption_priv.asc
   when: gpg_key_stat.stat.exists or gpg_priv_exported.stat.exists
   become: true 
