@@ -93,6 +93,7 @@ cat <<EOF | sudo tee -a /etc/hosts
 192.168.56.254  mysql84backup
 192.168.56.181  mysql8backup
 192.168.56.182  mysql8restore
+192.168.56.253  mysql84restore
 EOF
 
 echo "[INFO] Monitor provisioning complete."
