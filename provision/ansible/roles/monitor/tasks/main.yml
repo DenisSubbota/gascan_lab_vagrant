@@ -50,15 +50,22 @@
   register: env_content
   when: env_file.stat.exists
 
-- name: Parse .env variables
+- name: Extract USER_PUB_KEY from .env file (complex handling)
+  ansible.builtin.shell: |
+    grep '^USER_PUB_KEY=' /vagrant/config/.env | cut -d'=' -f2-
+  register: user_pub_key_result
+  when: env_file.stat.exists
+  changed_when: false
+
+- name: Parse other .env variables (simple approach)
   ansible.builtin.set_fact:
     env_vars: >-
-      {{ dict((env_content['content'] | b64decode | regex_findall('([A-Z0-9_]+)=([^\n]+)'))) }}
+      {{ dict((env_content['content'] | b64decode | regex_findall('^([A-Z0-9_]+)=(.*)$', multiline=True, flags='M'))) }}
   when: env_file.stat.exists
 
 - name: Set environment variables from .env
   ansible.builtin.set_fact:
-    user_pub_key: "{{ env_vars.USER_PUB_KEY | default('') }}"
+    user_pub_key: "{{ user_pub_key_result.stdout | default('') }}"
     gascan_version: "{{ env_vars.GASCAN_VERSION | default('v1.10.0') }}"
     customer_env: "{{ env_vars.CUSTOMER_ENV | default('monitor-gascan') }}"
     api_key: "{{ env_vars.API_KEY | default('') }}"
