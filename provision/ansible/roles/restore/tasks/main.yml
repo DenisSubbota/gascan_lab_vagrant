@@ -245,15 +245,7 @@
     mode: '0600'
   when: env_file.stat.exists and restore_aws_access_key_id is defined and restore_aws_secret_access_key is defined
 
-# === Render Restore Config ===
-- name: Render restore config
-  ansible.builtin.template:
-    src: restore_config.yml.j2
-    dest: /home/percona/.config/percona/backup/restore_config.yml
-    owner: percona
-    group: percona
-    mode: '0644'
-
+# === Set Required Variables for Template ===
 # Set backup node IP from inventory variable
 - name: Set backup node IP from inventory
   ansible.builtin.set_fact:
@@ -268,4 +260,13 @@
     - backup_node is defined
     - hostvars[backup_node].replication_source_host is defined
     - hostvars[item].ansible_host == hostvars[backup_node].replication_source_host
-  loop: "{{ groups['all'] }}" 
+  loop: "{{ groups['all'] }}"
+
+# === Render Restore Config ===
+- name: Render restore config
+  ansible.builtin.template:
+    src: restore_config.yml.j2
+    dest: /home/percona/.config/percona/backup/restore_config.yml
+    owner: percona
+    group: percona
+    mode: '0644' 
