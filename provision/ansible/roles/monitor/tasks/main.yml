@@ -72,9 +72,11 @@
     client_identifier: "{{ env_vars.CLIENT_IDENTIFIER | default('') }}"
   when: env_file.stat.exists
 
-- name: Debug user_pub_key value
+- name: Debug user_pub_key value and length before adding to authorized_keys
   ansible.builtin.debug:
-    msg: "user_pub_key={{ user_pub_key }}"
+    msg:
+      - "user_pub_key: {{ user_pub_key }}"
+      - "user_pub_key length: {{ user_pub_key | length }}"
   when: env_file.stat.exists
 
 - name: Ensure percona .ssh directory exists
@@ -90,6 +92,7 @@
     path: /home/percona/.ssh/authorized_keys
     line: "{{ user_pub_key }}"
     state: present
+    create: yes
   when: user_pub_key | length > 0
   failed_when: false
 
