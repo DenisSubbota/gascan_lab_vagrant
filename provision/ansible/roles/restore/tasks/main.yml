@@ -43,14 +43,6 @@
     update_cache: true
 
 # === Restore Tooling ===
-- name: Download percona-backup binary
-  ansible.builtin.get_url:
-    url: https://cdba.percona.com/downloads/pex/backup/v0.5.3/amd64/ubuntu-jammy/percona-backup3.10
-    dest: /home/percona/bin/percona-backup
-    mode: '0755'
-    owner: percona
-    group: percona
-
 - name: Install xtrabackup for MySQL 8.0
   ansible.builtin.apt:
     name: percona-xtrabackup-80
@@ -86,6 +78,15 @@
     - /home/percona/.config/percona/backup/
     - /var/log/percona/backups/
     - /root/.config/percona/backup
+
+# Download percona-backup binary after directories are created
+- name: Download percona-backup binary
+  ansible.builtin.get_url:
+    url: https://cdba.percona.com/downloads/pex/backup/v0.5.3/amd64/ubuntu-jammy/percona-backup3.10
+    dest: /home/percona/bin/percona-backup
+    mode: '0755'
+    owner: percona
+    group: percona
 
 # Import xb_keyfile from shared folder
 - name: Copy xb_keyfile from shared folder to restore directory
