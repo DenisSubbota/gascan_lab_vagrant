@@ -319,9 +319,9 @@
   ansible.builtin.lineinfile:
     path: /etc/cron.d/percona_crons
     line: >-
-      "* * * * * root PERCONA_BACKUP_TEXTFILE_COLLECTOR_DIR='/home/percona/pmm/collectors/textfile-collector/low-resolution/'
+      * * * * * root PERCONA_BACKUP_TEXTFILE_COLLECTOR_DIR='/home/percona/pmm/collectors/textfile-collector/low-resolution/'
       PEX_SCRIPT=backup_driver.py /home/percona/bin/percona-backup --config
-      /home/percona/.config/percona/backup/backup_config.yml -l /tmp/backup_driver.lock"
+      /home/percona/.config/percona/backup/backup_config.yml -l /tmp/backup_driver.lock
     create: yes
     owner: root
     group: root
