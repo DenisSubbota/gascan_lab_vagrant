@@ -3,15 +3,15 @@ Vagrant.configure("2") do |config|
   # Set :order to control the order in which VMs are defined and brought up
   machines = [
     { name: "monitor", ip: "192.168.56.100", provision: "provision/provision_monitor.sh", memory: 6144, cpus: 4, order: 1 },
-    { name: "proxysql1", ip: "192.168.56.101", box: "ubuntu/noble64", memory: 512, cpus: 1, order: 2 },
-    { name: "proxysql2", ip: "192.168.56.102", box: "ubuntu/noble64", memory: 512, cpus: 1, order: 3 },
+    { name: "proxysql1", ip: "192.168.56.101", box: "onlyoffice/base-ubuntu2404", memory: 512, cpus: 1, order: 2 },
+    { name: "proxysql2", ip: "192.168.56.102", box: "onlyoffice/base-ubuntu2404", memory: 512, cpus: 1, order: 3 },
     { name: "mysql57", ip: "192.168.56.157", memory: 1024, cpus: 2, order: 4 },
     { name: "mysql8", ip: "192.168.56.180", memory: 1024, cpus: 2, order: 5 },
     { name: "mysql8backup", ip: "192.168.56.181", memory: 1024, cpus: 2, order: 6 },
     { name: "mysql8restore", ip: "192.168.56.182", memory: 1024, cpus: 2, order: 7 },
-    { name: "mysql84", ip: "192.168.56.184", box: "ubuntu/noble64", memory: 1024, cpus: 2, order: 8 },
-    { name: "mysql84backup", ip: "192.168.56.185", box: "ubuntu/noble64", memory: 1024, cpus: 2, order: 9 },
-    { name: "mysql84restore", ip: "192.168.56.186", box: "ubuntu/noble64", memory: 1024, cpus: 2, order: 10 }
+    { name: "mysql84", ip: "192.168.56.184", box: "onlyoffice/base-ubuntu2404", memory: 1024, cpus: 2, order: 8 },
+    { name: "mysql84backup", ip: "192.168.56.185", box: "onlyoffice/base-ubuntu2404", memory: 1024, cpus: 2, order: 9 },
+    { name: "mysql84restore", ip: "192.168.56.186", box: "onlyoffice/base-ubuntu2404", memory: 1024, cpus: 2, order: 10 }
   ]
 
   # Sort machines by :order before defining VMs
