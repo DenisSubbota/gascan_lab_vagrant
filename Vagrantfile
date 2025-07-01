@@ -3,21 +3,22 @@ Vagrant.configure("2") do |config|
   # Set :order to control the order in which VMs are defined and brought up
   machines = [
     { name: "monitor", ip: "192.168.56.100", provision: "provision/provision_monitor.sh", memory: 6144, cpus: 4, order: 1 },
-    { name: "proxysql1", ip: "192.168.56.101", provision: "provision/percona_user_ssh_setup.sh", memory: 512, cpus: 1, order: 2 },
-    { name: "proxysql2", ip: "192.168.56.102", provision: "provision/percona_user_ssh_setup.sh", memory: 512, cpus: 1, order: 3 },
-    { name: "mysql57", ip: "192.168.56.157", provision: "provision/percona_user_ssh_setup.sh", memory: 1024, cpus: 2, order: 4 },
-    { name: "mysql8", ip: "192.168.56.180", provision: "provision/percona_user_ssh_setup.sh", memory: 1024, cpus: 2, order: 5 },
-    { name: "mysql8backup", ip: "192.168.56.181", provision: "provision/percona_user_ssh_setup.sh", memory: 1024, cpus: 2, order: 6 },
-    { name: "mysql8restore", ip: "192.168.56.182", provision: "provision/percona_user_ssh_setup.sh", memory: 1024, cpus: 2, order: 7 },
-    { name: "mysql84", ip: "192.168.56.184", provision: "provision/percona_user_ssh_setup.sh", memory: 1024, cpus: 2, order: 8 },
-    { name: "mysql84backup", ip: "192.168.56.185", provision: "provision/percona_user_ssh_setup.sh", memory: 1024, cpus: 2, order: 9 },
-    { name: "mysql84restore", ip: "192.168.56.186", provision: "provision/percona_user_ssh_setup.sh", memory: 1024, cpus: 2, order: 10 }
+    { name: "proxysql1", ip: "192.168.56.101", box: "ubuntu/noble64", memory: 512, cpus: 1, order: 2 },
+    { name: "proxysql2", ip: "192.168.56.102", box: "ubuntu/noble64", memory: 512, cpus: 1, order: 3 },
+    { name: "mysql57", ip: "192.168.56.157", memory: 1024, cpus: 2, order: 4 },
+    { name: "mysql8", ip: "192.168.56.180", memory: 1024, cpus: 2, order: 5 },
+    { name: "mysql8backup", ip: "192.168.56.181", memory: 1024, cpus: 2, order: 6 },
+    { name: "mysql8restore", ip: "192.168.56.182", memory: 1024, cpus: 2, order: 7 },
+    { name: "mysql84", ip: "192.168.56.184", box: "ubuntu/noble64", memory: 1024, cpus: 2, order: 8 },
+    { name: "mysql84backup", ip: "192.168.56.185", box: "ubuntu/noble64", memory: 1024, cpus: 2, order: 9 },
+    { name: "mysql84restore", ip: "192.168.56.186", box: "ubuntu/noble64", memory: 1024, cpus: 2, order: 10 }
   ]
 
   # Sort machines by :order before defining VMs
   machines.sort_by { |m| m[:order] }.each do |machine|
     config.vm.define machine[:name] do |node|
-      node.vm.box = "generic/ubuntu2204"
+      # Use specified box or default to ubuntu/jammy64
+      node.vm.box = machine[:box] || "ubuntu/jammy64"
       node.vm.hostname = machine[:name]
       node.vm.network "private_network", 
         ip: machine[:ip],
@@ -25,30 +26,13 @@ Vagrant.configure("2") do |config|
         libvirt__forward_mode: "nat"
       node.vm.synced_folder "./provision", "/vagrant/provision", create: true
       node.vm.synced_folder "./config", "/vagrant/config", create: true
-      
-      # Libvirt provider configuration
-      node.vm.provider :libvirt do |libvirt|
-        libvirt.memory = machine[:memory]
-        libvirt.cpus = machine[:cpus]
-        libvirt.driver = "kvm"
-        libvirt.management_network_name = "default"
-        libvirt.management_network_address = "192.168.122.0/24"
-        
-        # Performance optimizations
-        libvirt.nested = true
-        libvirt.cpu_model = "host-passthrough"
-        
-        # Optional: Enable huge pages for better performance (uncomment if needed)
-        # libvirt.memory_hugepages = true
-        
-        # Optional: Set disk bus for better I/O performance
-        libvirt.disk_bus = "virtio"
-        
-        # Optional: Enable balloon driver for dynamic memory management
-        libvirt.memballoon_enabled = true
+      node.vm.provider "virtualbox" do |vb|
+        vb.memory = machine[:memory]
+        vb.cpus = machine[:cpus]
       end
-      
-      node.vm.provision "shell", path: machine[:provision]
+      # Use specified provision script or default to percona_user_ssh_setup.sh
+      provision_script = machine[:provision] || "provision/percona_user_ssh_setup.sh"
+      node.vm.provision "shell", path: provision_script
     end
   end
 end
