@@ -274,4 +274,5 @@ sudo ansible-playbook -i /vagrant/provision/ansible/inventory/lab.ini /vagrant/p
 - Multi-source replication: use 8.4 multiple instances for this purpose (8.4 is a replica of 8.4)
 
 - probably if no client_identifier and api-key present use some default inventory for gascan
+- 
 ---
